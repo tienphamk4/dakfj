@@ -1,0 +1,260 @@
+schema: spec-driven
+
+context: |
+  # BeeShop (SD44) — Frontend Web App
+
+  ## Tech Stack
+  Language:         TypeScript
+  Framework:        React (Vite)
+  UI Library:       Ant Design
+  State Management: React Query (server state) + Zustand (client state)
+  Routing:          React Router
+  Styling:          Ant Design + CSS Modules
+  Form:             Ant Design Form
+  HTTP Client:      Axios
+  Auth:             JWT — Access Token + Refresh Token
+  Deploy:           Docker + Nginx
+
+  ## Frontend Architecture (Clean)
+  pages/        — route-level page components
+  components/   — shared/reusable UI components
+  features/     — domain-scoped modules (auth, product, cart, order, admin)
+  services/     — Axios API call functions
+  hooks/        — custom React hooks
+  store/        — Zustand stores
+  utils/        — helper functions
+  types/        — TypeScript type/interface definitions
+  layouts/      — layout wrapper components (AdminLayout, UserLayout)
+
+  ## Backend
+  Base URL:     http://localhost:8080
+  Frontend URL: http://localhost:3000
+  Stack:        Spring Boot + Spring Security (JWT/OAuth2 Resource Server) + JPA + MySQL
+  Auth scheme:  Bearer Token (JWT — HMAC-SHA256)
+  JWT claims:   subject = userId (UUID), role, issuer = "BL Hieu"
+  Token expiry: accessToken = 6000s (~100 min), refreshToken = 108000s (~30 h)
+
+  ## API Response Structure
+  ALL API endpoints return ApiResponse<T>:
+  ```json
+  {
+    "message": "string",
+    "data": "<T>",
+    "timestamp": "2026-03-11T10:30:00"
+  }
+  ```
+  There is NO `meta` or `error` field. Error cases return HTTP 4xx/5xx with message.
+
+  ## Access Control
+  Public (no token):    POST /api/login, POST /api/register, POST /api/refresh,
+                        GET / (homepage), GET /api/order/vnpay-return
+  Admin (role=ADMIN):   /api/admin/**
+  Authenticated (JWT):  all other endpoints
+
+  ## API Endpoints
+
+  ### Auth  (prefix: /api)
+  POST   /api/login            body: { email, password }
+                               response: { accessToken, refreshToken, userResponse }
+  POST   /api/register         body: { name, email, password, phone, address }
+                               response: UserResponse
+  POST   /api/refresh          body: { refreshToken }
+                               response: data = "newAccessToken" (plain string)
+  GET    /api/logout            body: { refreshToken }
+                               response: data = null
+
+  ### Brand  (prefix: /api/admin/thuong-hieu  |  role: ADMIN)
+  GET    /api/admin/thuong-hieu
+  POST   /api/admin/thuong-hieu          body: { name }
+  PUT    /api/admin/thuong-hieu/{id}     body: { name }
+  DELETE /api/admin/thuong-hieu/{id}
+
+  ### Color  (prefix: /api/admin/mau-sac  |  role: ADMIN)
+  GET    /api/admin/mau-sac
+  POST   /api/admin/mau-sac              body: { name }
+  PUT    /api/admin/mau-sac/{id}         body: { name }
+  DELETE /api/admin/mau-sac/{id}
+
+  ### Material  (prefix: /api/admin/chat-lieu  |  role: ADMIN)
+  GET    /api/admin/chat-lieu
+  POST   /api/admin/chat-lieu            body: { name }
+  PUT    /api/admin/chat-lieu/{id}       body: { name }
+  DELETE /api/admin/chat-lieu/{id}
+
+  ### Size  (prefix: /api/admin/size  |  role: ADMIN)
+  GET    /api/admin/size
+  POST   /api/admin/size                 body: { name }
+  PUT    /api/admin/size/{id}            body: { name }
+  DELETE /api/admin/size/{id}
+
+  ### Product  (prefix: /api/admin/san-pham  |  role: ADMIN)
+  GET    /api/admin/san-pham
+  POST   /api/admin/san-pham
+         body: { name, image, status(0|1), marterialId, brandId }
+  PUT    /api/admin/san-pham
+         body: { id, name, image, status, marterialId, brandId }
+  Note:  status is stored as int (1=active, 0=inactive) but returned as string
+         "hoat dong" / "khong hoat dong"
+  Note:  typo in backend: field is "marterialId" (not "materialId")
+
+  ### ProductDetail  (prefix: /api/admin/product-detail  |  role: ADMIN)
+  GET    /api/admin/product-detail
+  POST   /api/admin/product-detail
+         body: { name, description, quantity, costPrice, salePrice, deleteFlag,
+                 productId, sizeId, colorId, images: string[] }
+  PUT    /api/admin/product-detail
+         body: same as POST + id
+  DELETE /api/admin/product-detail/{id}   (soft delete: sets deleteFlag=true)
+  GET    /api/admin/product-detail/search
+         query params (all optional): name, color(UUID), size(UUID), salePrice
+
+  ### Images  (prefix: /images)
+  GET    /images
+  POST   /images     body: { url: string[], productDetailId }
+
+  ### File Upload  (prefix: /api/upload)
+  POST   /api/upload/files       multipart: file, folder
+                                 response: data = "filename.jpg" (string)
+  POST   /api/upload/multiple    multipart: files[], folder
+                                 response: data = string[]
+  Limit: 50 MB/file, 50 MB/request
+
+  ### Homepage & Cart  (no /api prefix for these)
+  GET    /                               Public — list all active ProductDetails
+  GET    /cart                           Auth   — view cart
+  GET    /add-product-to-cart/{productDetailId}  Auth — add 1 item to cart (qty=1 each call)
+
+  ### Order  (prefix: /api/order)
+  POST   /api/order/pay          Auth
+         body: { productDetail: [{id, quantity}], note, total, paymentMethod }
+         paymentMethod: "COD" → returns OrderResponse
+         paymentMethod: "VNPAY" → returns VNPayResponse { paymentUrl, orderId, amount, orderInfo, success }
+  GET    /api/order/vnpay-return  Public — VNPay IPN callback
+         query: vnp_TxnRef, vnp_ResponseCode, vnp_SecureHash
+         logic: verify HMAC-SHA512 → code 00 → paymentStatus=1, else paymentStatus=3
+
+  ## Key TypeScript Types
+  ```ts
+  // Response wrapper
+  interface ApiResponse<T> {
+    message: string;
+    data: T;
+    timestamp: string;
+  }
+
+  // Auth
+  interface LoginResponse {
+    accessToken: string;
+    refreshToken: string;
+    userResponse: UserResponse;
+  }
+  interface UserResponse {
+    id: string;
+    name: string;
+    email: string;
+    role: 'admin' | 'user';
+    phone: string;
+    avatar: string;
+    address: string;
+  }
+
+  // Catalog
+  interface Brand     { id: string; name: string; }
+  interface Color     { id: string; name: string; }
+  interface Material  { id: string; name: string; }
+  interface Size      { id: string; name: string; }
+
+  interface ProductResponse {
+    id: string;
+    name: string;
+    brand: string;
+    marterial: string;  // note: typo mirrors backend field name
+    image: string;
+    status: 'hoat dong' | 'khong hoat dong';
+    createdAt: string;
+    updatedAt: string;
+  }
+
+  interface ProductDetailResponse {
+    id: string;
+    name: string;
+    description: string;
+    costPrice: number;
+    salePrice: number;
+    quantity: number;
+    product: string;
+    color: string;
+    size: string;
+    images: string[];
+  }
+
+  // Cart
+  interface CartItem {
+    productDetail: { id: string; name: string; salePrice: number; images: string[]; };
+    quantity: number;
+    totalPrice: number;
+  }
+
+  // Order
+  type PaymentMethod = 'COD' | 'VNPAY';
+  type PaymentStatus = 0 | 1 | 3; // 0=pending, 1=paid, 3=failed
+
+  interface OrderRequest {
+    productDetail: { id: string; quantity: number }[];
+    note: string;
+    total: number;
+    paymentMethod: PaymentMethod;
+  }
+  interface OrderResponse {
+    id: string;
+    code: string;
+    note: string;
+    createdAt: string;
+    paymentDate: string;
+    paymentMethod: PaymentMethod;
+    total: number;
+    status: PaymentStatus;
+    userResponse: UserResponse;
+    productDetailResponses: ProductDetailResponse[];
+  }
+  interface VNPayResponse {
+    paymentUrl: string;
+    orderId: string;
+    amount: number;
+    orderInfo: string;
+    success: boolean;
+  }
+  ```
+
+  ## Naming Conventions
+  Components:   PascalCase   (e.g. ProductCard, AdminLayout)
+  Hooks:        useCamelCase (e.g. useAuth, useProductList)
+  Files:        kebab-case   (e.g. product-card.tsx, use-auth.ts)
+  Services:     camelCase fn (e.g. loginApi, getProducts)
+  Zustand:      useXxxStore  (e.g. useAuthStore, useCartStore)
+
+  ## State Rules
+  Server state (lists, details, mutations) → React Query (useQuery / useMutation)
+  Client state (auth tokens, UI flags)     → Zustand
+  Forms                                    → Ant Design Form + built-in rules validation
+  Dates                                    → UTC ISO 8601 strings (no client-side TZ conversion)
+
+  ## Auth Token Storage
+  accessToken  → memory (Zustand store) or sessionStorage
+  refreshToken → localStorage
+  Auto-refresh via Axios response interceptor on 401
+
+rules:
+  proposal:
+    - document in folder /docs
+    - Always list affected API endpoints with method + path
+    - Identify whether the feature is Public, Auth, or Admin
+    - Note any backend field name quirks (e.g. marterialId typo)
+  design:
+    - Map every API field to a TypeScript type/interface
+    - Specify which state goes to React Query vs Zustand
+    - List Ant Design components to use
+  tasks:
+    - Separate tasks for: types, service fn, hook, component, page wiring
+    - Admin tasks must include role guard check
+    - Each task should be completable in ≤ 2 hours
