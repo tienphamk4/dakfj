@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { App, Button, Form, Input, InputNumber, Modal, Popconfirm, Select, Space, Table, Tag, Typography, Upload } from 'antd'
-import { DeleteOutlined, EditOutlined, PlusOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons'
+import { App, Button, Descriptions, Drawer, Form, Image, Input, InputNumber, Modal, Popconfirm, Select, Space, Table, Tag, Typography, Upload } from 'antd'
+import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { UploadFile } from 'antd'
 import { getColors, getSizes } from '@/services/catalog.service'
@@ -43,6 +43,9 @@ export default function ProductDetailPage() {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<ProductDetailResponse | null>(null)
   const [searchParams, setSearchParams] = useState<SearchParams | null>(null)
+  const [loadingId, setLoadingId] = useState<string | null>(null)
+  const [detailItem, setDetailItem] = useState<ProductDetailResponse | null>(null)
+  const [detailOpen, setDetailOpen] = useState(false)
 
   const { data: detailsRes, isLoading } = useQuery({
     queryKey: ['product-details', searchParams],
@@ -100,19 +103,42 @@ export default function ProductDetailPage() {
 
   const openCreate = () => { setEditing(null); form.resetFields(); setOpen(true) }
 
-  const openEdit = (record: ProductDetailResponse) => {
-    setEditing(record)
-    form.setFieldsValue({
-      name: record.name,
-      description: record.description,
-      quantity: record.quantity,
-      costPrice: record.costPrice,
-      salePrice: record.salePrice,
-      productId: productsRes?.data?.find(p => p.name === record.product)?.id,
-      colorId: colorsRes?.data?.find(c => c.name === record.color)?.id,
-      sizeId: sizesRes?.data?.find(s => s.name === record.size)?.id,
-    })
-    setOpen(true)
+  const openEdit = async (id: string) => {
+    setLoadingId(id)
+    try {
+      const fresh = await qc.fetchQuery({ queryKey: ['product-details-admin'], queryFn: () => getProductDetails().then(r => r.data), staleTime: 0 })
+      const record = fresh.data?.find(p => p.id === id)
+      if (record) {
+        setEditing(record)
+        form.setFieldsValue({
+          name: record.name,
+          description: record.description,
+          quantity: record.quantity,
+          costPrice: record.costPrice,
+          salePrice: record.salePrice,
+          productId: productsRes?.data?.find(p => p.name === record.product)?.id,
+          colorId: colorsRes?.data?.find(c => c.name === record.color)?.id,
+          sizeId: sizesRes?.data?.find(s => s.name === record.size)?.id,
+        })
+        setOpen(true)
+      }
+    } finally {
+      setLoadingId(null)
+    }
+  }
+
+  const openDetail = async (id: string) => {
+    setLoadingId(id)
+    try {
+      const fresh = await qc.fetchQuery({ queryKey: ['product-details-admin'], queryFn: () => getProductDetails().then(r => r.data), staleTime: 0 })
+      const record = fresh.data?.find(p => p.id === id)
+      if (record) {
+        setDetailItem(record)
+        setDetailOpen(true)
+      }
+    } finally {
+      setLoadingId(null)
+    }
   }
 
   const handleSearch = (values: SearchParams) => {
@@ -142,9 +168,22 @@ export default function ProductDetailPage() {
       key: 'actions',
       render: (_: unknown, record: ProductDetailResponse) => (
         <Space>
-          <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(record)} />
+          <Button
+            size="small"
+            icon={<EyeOutlined />}
+            loading={loadingId === record.id}
+            disabled={loadingId !== null && loadingId !== record.id}
+            onClick={() => openDetail(record.id)}
+          />
+          <Button
+            size="small"
+            icon={<EditOutlined />}
+            loading={loadingId === record.id}
+            disabled={loadingId !== null && loadingId !== record.id}
+            onClick={() => openEdit(record.id)}
+          />
           <Popconfirm title="Xác nhận xóa?" onConfirm={() => deleteMutation.mutate(record.id)}>
-            <Button size="small" danger icon={<DeleteOutlined />} />
+            <Button size="small" danger icon={<DeleteOutlined />} disabled={loadingId !== null} />
           </Popconfirm>
         </Space>
       ),
@@ -250,6 +289,46 @@ export default function ProductDetailPage() {
           </Form.Item>
         </Form>
       </Modal>
+
+      <Drawer
+        title="Chi tiết sản phẩm"
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        width={560}
+      >
+        {detailItem && (
+          <>
+            <Descriptions column={1} bordered size="small" style={{ marginBottom: 16 }}>
+              <Descriptions.Item label="Tên">{detailItem.name}</Descriptions.Item>
+              <Descriptions.Item label="Mô tả">{detailItem.description || '—'}</Descriptions.Item>
+              <Descriptions.Item label="Sản phẩm">{detailItem.product}</Descriptions.Item>
+              <Descriptions.Item label="Màu sắc">{detailItem.color}</Descriptions.Item>
+              <Descriptions.Item label="Size">{detailItem.size}</Descriptions.Item>
+              <Descriptions.Item label="Số lượng">{detailItem.quantity}</Descriptions.Item>
+              <Descriptions.Item label="Giá vốn">{detailItem.costPrice?.toLocaleString('vi-VN')}₫</Descriptions.Item>
+              <Descriptions.Item label="Giá bán">{detailItem.salePrice?.toLocaleString('vi-VN')}₫</Descriptions.Item>
+            </Descriptions>
+            {detailItem.images?.length > 0 && (
+              <>
+                <Typography.Text strong>Hình ảnh</Typography.Text>
+                <Image.PreviewGroup>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                    {detailItem.images.map((img, i) => (
+                      <Image
+                        key={i}
+                        src={`${import.meta.env.VITE_API_BASE_URL}/images/${img}`}
+                        width={80}
+                        height={80}
+                        style={{ objectFit: 'cover', borderRadius: 4 }}
+                      />
+                    ))}
+                  </div>
+                </Image.PreviewGroup>
+              </>
+            )}
+          </>
+        )}
+      </Drawer>
     </>
   )
 }

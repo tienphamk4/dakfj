@@ -25,11 +25,16 @@ function AppInner() {
 
     // Restore session from refreshToken stored in localStorage
     const stored = localStorage.getItem('refreshToken')
-    if (stored) {
+    const storedUser = localStorage.getItem('user')
+    if (stored && storedUser) {
       refreshTokenApi(stored)
-        .then(res => setAuth(res.data.accessToken, res.data.user))
+        .then(res => setAuth(res.data.data, JSON.parse(storedUser)))
         .catch(() => clearAuth())
         .finally(() => setBooting(false))
+    } else if (stored && !storedUser) {
+      // Legacy session — missing user entry, force re-login
+      clearAuth()
+      setBooting(false)
     } else {
       setBooting(false)
     }

@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { App, Button, Form, Input, Modal, Popconfirm, Space, Table } from 'antd'
-import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
+import { App, Button, Descriptions, Drawer, Form, Input, Modal, Popconfirm, Space, Table } from 'antd'
+import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 export interface CatalogItem {
@@ -30,6 +30,9 @@ export default function CatalogTable({
   const [form] = Form.useForm<{ name: string }>()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<CatalogItem | null>(null)
+  const [loadingId, setLoadingId] = useState<string | null>(null)
+  const [detailItem, setDetailItem] = useState<CatalogItem | null>(null)
+  const [detailOpen, setDetailOpen] = useState(false)
 
   const { data, isLoading } = useQuery({ queryKey: [queryKey], queryFn: fetchFn })
 
@@ -55,7 +58,35 @@ export default function CatalogTable({
   })
 
   const openCreate = () => { setEditing(null); form.resetFields(); setOpen(true) }
-  const openEdit = (item: CatalogItem) => { setEditing(item); form.setFieldsValue({ name: item.name }); setOpen(true) }
+
+  const openEdit = async (id: string) => {
+    setLoadingId(id)
+    try {
+      const fresh = await qc.fetchQuery({ queryKey: [queryKey], queryFn: fetchFn, staleTime: 0 })
+      const item = fresh.data.find(i => i.id === id)
+      if (item) {
+        setEditing(item)
+        form.setFieldsValue({ name: item.name })
+        setOpen(true)
+      }
+    } finally {
+      setLoadingId(null)
+    }
+  }
+
+  const openDetail = async (id: string) => {
+    setLoadingId(id)
+    try {
+      const fresh = await qc.fetchQuery({ queryKey: [queryKey], queryFn: fetchFn, staleTime: 0 })
+      const item = fresh.data.find(i => i.id === id)
+      if (item) {
+        setDetailItem(item)
+        setDetailOpen(true)
+      }
+    } finally {
+      setLoadingId(null)
+    }
+  }
 
   const columns = [
     { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
@@ -63,12 +94,25 @@ export default function CatalogTable({
     {
       title: 'Hành động',
       key: 'actions',
-      width: 120,
+      width: 140,
       render: (_: unknown, record: CatalogItem) => (
         <Space>
-          <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(record)} />
+          <Button
+            size="small"
+            icon={<EyeOutlined />}
+            loading={loadingId === record.id}
+            disabled={loadingId !== null && loadingId !== record.id}
+            onClick={() => openDetail(record.id)}
+          />
+          <Button
+            size="small"
+            icon={<EditOutlined />}
+            loading={loadingId === record.id}
+            disabled={loadingId !== null && loadingId !== record.id}
+            onClick={() => openEdit(record.id)}
+          />
           <Popconfirm title="Xác nhận xóa?" onConfirm={() => deleteMutation.mutate(record.id)}>
-            <Button size="small" danger icon={<DeleteOutlined />} />
+            <Button size="small" danger icon={<DeleteOutlined />} disabled={loadingId !== null} />
           </Popconfirm>
         </Space>
       ),
@@ -104,6 +148,20 @@ export default function CatalogTable({
           </Form.Item>
         </Form>
       </Modal>
+
+      <Drawer
+        title={`Chi tiết ${title}`}
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        width={480}
+      >
+        {detailItem && (
+          <Descriptions column={1} bordered size="small">
+            <Descriptions.Item label="ID">{detailItem.id}</Descriptions.Item>
+            <Descriptions.Item label="Tên">{detailItem.name}</Descriptions.Item>
+          </Descriptions>
+        )}
+      </Drawer>
     </>
   )
 }

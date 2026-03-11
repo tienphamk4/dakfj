@@ -20,6 +20,7 @@ export default function LoginPage() {
     onSuccess: res => {
       const { accessToken, refreshToken, userResponse } = res.data.data
       localStorage.setItem('refreshToken', refreshToken)
+      localStorage.setItem('user', JSON.stringify(userResponse))
       setAuth(accessToken, userResponse)
       message.success('Đăng nhập thành công!')
       if (userResponse.role === 'admin') {

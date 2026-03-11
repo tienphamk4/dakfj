@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { App, Button, Form, Input, Modal, Popconfirm, Select, Space, Table, Tag, Typography, Upload } from 'antd'
-import { DeleteOutlined, EditOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
+import { App, Button, Descriptions, Drawer, Form, Image, Input, Modal, Popconfirm, Select, Space, Table, Tag, Typography, Upload } from 'antd'
+import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { UploadFile } from 'antd'
 import { getBrands } from '@/services/catalog.service'
@@ -28,6 +28,9 @@ export default function ProductPage() {
   const [form] = Form.useForm<ProductFormValues>()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<ProductResponse | null>(null)
+  const [loadingId, setLoadingId] = useState<string | null>(null)
+  const [detailItem, setDetailItem] = useState<ProductResponse | null>(null)
+  const [detailOpen, setDetailOpen] = useState(false)
 
   const { data: productsRes, isLoading } = useQuery({ queryKey: ['products-admin'], queryFn: () => getProducts().then(r => r.data) })
   const { data: brandsRes } = useQuery({ queryKey: ['brands'], queryFn: () => getBrands().then(r => r.data) })
@@ -73,15 +76,38 @@ export default function ProductPage() {
     setOpen(true)
   }
 
-  const openEdit = (record: ProductResponse) => {
-    setEditing(record)
-    form.setFieldsValue({
-      name: record.name,
-      status: record.status === 'hoat dong' ? 1 : 0,
-      brandId: brandsRes?.data?.find(b => b.name === record.brand)?.id,
-      marterialId: materialsRes?.data?.find(m => m.name === record.marterial)?.id,
-    })
-    setOpen(true)
+  const openEdit = async (id: string) => {
+    setLoadingId(id)
+    try {
+      const fresh = await qc.fetchQuery({ queryKey: ['products-admin'], queryFn: () => getProducts().then(r => r.data), staleTime: 0 })
+      const record = fresh.data?.find(p => p.id === id)
+      if (record) {
+        setEditing(record)
+        form.setFieldsValue({
+          name: record.name,
+          status: record.status === 'hoat dong' ? 1 : 0,
+          brandId: brandsRes?.data?.find(b => b.name === record.brand)?.id,
+          marterialId: materialsRes?.data?.find(m => m.name === record.marterial)?.id,
+        })
+        setOpen(true)
+      }
+    } finally {
+      setLoadingId(null)
+    }
+  }
+
+  const openDetail = async (id: string) => {
+    setLoadingId(id)
+    try {
+      const fresh = await qc.fetchQuery({ queryKey: ['products-admin'], queryFn: () => getProducts().then(r => r.data), staleTime: 0 })
+      const record = fresh.data?.find(p => p.id === id)
+      if (record) {
+        setDetailItem(record)
+        setDetailOpen(true)
+      }
+    } finally {
+      setLoadingId(null)
+    }
   }
 
   const columns = [
@@ -110,7 +136,20 @@ export default function ProductPage() {
       key: 'actions',
       render: (_: unknown, record: ProductResponse) => (
         <Space>
-          <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(record)} />
+          <Button
+            size="small"
+            icon={<EyeOutlined />}
+            loading={loadingId === record.id}
+            disabled={loadingId !== null && loadingId !== record.id}
+            onClick={() => openDetail(record.id)}
+          />
+          <Button
+            size="small"
+            icon={<EditOutlined />}
+            loading={loadingId === record.id}
+            disabled={loadingId !== null && loadingId !== record.id}
+            onClick={() => openEdit(record.id)}
+          />
         </Space>
       ),
     },
@@ -166,6 +205,33 @@ export default function ProductPage() {
           </Form.Item>
         </Form>
       </Modal>
+
+      <Drawer
+        title="Chi tiết sản phẩm"
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        width={520}
+      >
+        {detailItem && (
+          <Descriptions column={1} bordered size="small">
+            <Descriptions.Item label="Tên">{detailItem.name}</Descriptions.Item>
+            <Descriptions.Item label="Ảnh">
+              {detailItem.image
+                ? <Image src={`${import.meta.env.VITE_API_BASE_URL}/images/${detailItem.image}`} width={80} height={80} style={{ objectFit: 'cover', borderRadius: 4 }} />
+                : '—'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Thương hiệu">{detailItem.brand}</Descriptions.Item>
+            <Descriptions.Item label="Chất liệu">{detailItem.marterial}</Descriptions.Item>
+            <Descriptions.Item label="Trạng thái">
+              <Tag color={detailItem.status === 'hoat dong' ? 'green' : 'red'}>
+                {detailItem.status === 'hoat dong' ? 'Hoạt động' : 'Không hoạt động'}
+              </Tag>
+            </Descriptions.Item>
+            <Descriptions.Item label="Ngày tạo">{detailItem.createdAt}</Descriptions.Item>
+            <Descriptions.Item label="Cập nhật">{detailItem.updatedAt}</Descriptions.Item>
+          </Descriptions>
+        )}
+      </Drawer>
     </>
   )
 }
