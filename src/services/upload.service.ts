@@ -12,7 +12,7 @@ export const uploadFile = (file: File, folder: string) => {
 
 export const uploadMultiple = (files: File[], folder: string) => {
   const form = new FormData()
-  files.forEach((f) => form.append('files', f))
+  files.forEach((f) => form.append('file', f))
   form.append('folder', folder)
   return axiosInstance.post<ApiResponse<string[]>>('/api/upload/multiple', form, {
     headers: { 'Content-Type': 'multipart/form-data' },

@@ -25,6 +25,8 @@ export default function LoginPage() {
       message.success('Đăng nhập thành công!')
       if (userResponse.role === 'admin') {
         navigate('/admin', { replace: true })
+      } else if (userResponse.role === 'employee') {
+        navigate('/employee/pos', { replace: true })
       } else {
         navigate('/', { replace: true })
       }

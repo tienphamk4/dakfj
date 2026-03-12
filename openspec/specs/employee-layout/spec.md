@@ -31,20 +31,20 @@ A dedicated layout and route guard for users with `role=employee`. Employees sho
 
 ---
 
-### Requirement: EmployeeLayout provides sidebar navigation
+### Requirement: EmployeeLayout provides sidebar navigation with light theme and header bar
 
 **File**: `src/layouts/EmployeeLayout.tsx`
 
 ```
 Layout (minHeight: 100vh)
-  Sider (width=220, collapsible, theme=dark)
-    Logo row (app name)
-    Avatar + email + role tag
+  Sider (collapsible, theme=light)
+    Logo row (color: token.colorPrimary — "BS" when collapsed, "BeeShop" when expanded)
     Menu (selectedKeys from pathname)
       Item: ShoppingCartOutlined  "Bán tại quầy"  /employee/pos
       Item: UnorderedListOutlined "Đơn hàng"       /employee/orders
-    Logout trigger at sider bottom
   Layout
+    Header (background: #fff, box-shadow)
+      Dropdown → Avatar + user.name + Tag "Nhân viên" → menu item: Đăng xuất
     Content (padding: 24)
       <Outlet />
 ```
@@ -53,11 +53,22 @@ Layout (minHeight: 100vh)
 - `/employee/orders` or `/employee/orders/:id` → key `/employee/orders`
 - `/employee/pos` → key `/employee/pos`
 
-**Logout:** calls `logoutApi` + `clearAuth()` + navigate to `/login`
+**Logout:** dropdown item in Header calls `logoutApi` + `clearAuth()` + navigate to `/login`
+
+The sidebar SHALL NOT embed user info (avatar, email, tag) or a logout button inline.
 
 #### Scenario: Employee views orders detail page
 - **WHEN** an employee navigates to `/employee/orders/:id`
 - **THEN** the "Đơn hàng" menu item remains highlighted
+
+#### Scenario: Sidebar renders in light theme with brand title
+- **WHEN** an employee accesses any `/employee/*` route
+- **THEN** the sidebar SHALL appear with a light background and brand title in `token.colorPrimary`
+
+#### Scenario: Logout via header dropdown
+- **WHEN** the employee clicks their avatar/name in the header
+- **THEN** a dropdown SHALL appear with "Đăng xuất"
+- **WHEN** clicked, the system SHALL call logout API, clear auth state, and navigate to `/login`
 
 ---
 
