@@ -9,6 +9,8 @@ import {
   LogoutOutlined,
   ScissorOutlined,
   ShopOutlined,
+  TagOutlined,
+  TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons'
 import { useAuthStore } from '@/store/use-auth-store'
@@ -31,6 +33,8 @@ const menuItems = [
       { key: '/admin/size', icon: <ScissorOutlined />, label: <Link to="/admin/size">Size</Link> },
     ],
   },
+  { key: '/admin/users', icon: <TeamOutlined />, label: <Link to="/admin/users">Người dùng</Link> },
+  { key: '/admin/vouchers', icon: <TagOutlined />, label: <Link to="/admin/vouchers">Voucher</Link> },
 ]
 
 export default function AdminLayout() {

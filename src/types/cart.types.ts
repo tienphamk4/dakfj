@@ -2,6 +2,7 @@ import type { UserResponse } from './api.types'
 import type { ProductDetailResponse } from './product.types'
 
 export interface CartItem {
+  id: string
   productDetail: {
     id: string
     name: string
@@ -41,4 +42,18 @@ export interface VNPayResponse {
   amount: number
   orderInfo: string
   success: boolean
+}
+
+export interface OrderDetailResponse extends Omit<OrderResponse, 'status'> {
+  shippingFee: number
+  type: 1 | 2
+  status: number
+}
+
+export interface EmployeeOrderRequest {
+  productDetail: { id: string; quantity: number }[]
+  note: string
+  total: number
+  paymentMethod: 'CASH'
+  type: 1 | 2
 }

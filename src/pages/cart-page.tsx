@@ -1,15 +1,22 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { Button, Card, Empty, Spin, Table, Typography } from 'antd'
-import { useQuery } from '@tanstack/react-query'
-import { getCart } from '@/services/cart.service'
+import { Button, Card, Empty, Popconfirm, Spin, Table, Typography } from 'antd'
+import { DeleteOutlined } from '@ant-design/icons'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { getCart, removeFromCart } from '@/services/cart.service'
 import type { CartItem } from '@/types'
 
 export default function CartPage() {
   const navigate = useNavigate()
+  const qc = useQueryClient()
 
   const { data, isLoading } = useQuery({
     queryKey: ['cart'],
     queryFn: () => getCart().then(r => r.data),
+  })
+
+  const removeMutation = useMutation({
+    mutationFn: (cartDetailId: string) => removeFromCart(cartDetailId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cart'] }),
   })
 
   const items: CartItem[] = data?.data ?? []
@@ -45,6 +52,20 @@ export default function CartPage() {
       ),
       align: 'right' as const,
     },
+    {
+      title: '',
+      key: 'remove',
+      render: (_: unknown, record: CartItem) => (
+        <Popconfirm title="Xóa khỏi giỏ hàng?" onConfirm={() => removeMutation.mutate(record.id)}>
+          <Button
+            size="small"
+            danger
+            icon={<DeleteOutlined />}
+            loading={removeMutation.isPending}
+          />
+        </Popconfirm>
+      ),
+    },
   ]
 
   if (isLoading) {
@@ -61,7 +82,7 @@ export default function CartPage() {
       <Table
         dataSource={items}
         columns={columns}
-        rowKey={record => record.productDetail.id}
+        rowKey={record => record.id}
         pagination={false}
         summary={() => (
           <Table.Summary>

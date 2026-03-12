@@ -1,18 +1,20 @@
 import { useState } from 'react'
-import { App, Button, Descriptions, Drawer, Form, Image, Input, Modal, Popconfirm, Select, Space, Table, Tag, Typography, Upload } from 'antd'
-import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
+import { App, Button, Col, Descriptions, Drawer, Form, Image, Input, Modal, Select, Space, Table, Tag, Typography, Upload } from 'antd'
+import { EditOutlined, EyeOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { UploadFile } from 'antd'
 import { getBrands } from '@/services/catalog.service'
 import { getMaterials } from '@/services/catalog.service'
 import {
   getProducts,
+  getProductById,
   createProduct,
   updateProduct,
   type CreateProductBody,
 } from '@/services/product.service'
 import { uploadFile } from '@/services/upload.service'
 import type { ProductResponse } from '@/types'
+import FilterBox from '@/components/admin/filter-box'
 
 interface ProductFormValues {
   name: string
@@ -22,15 +24,23 @@ interface ProductFormValues {
   image?: UploadFile[]
 }
 
+interface FilterValues {
+  name?: string
+  brandId?: string
+  marterialId?: string
+}
+
 export default function ProductPage() {
   const qc = useQueryClient()
   const { message } = App.useApp()
   const [form] = Form.useForm<ProductFormValues>()
+  const [filterForm] = Form.useForm<FilterValues>()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<ProductResponse | null>(null)
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [detailItem, setDetailItem] = useState<ProductResponse | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
+  const [filterValues, setFilterValues] = useState<FilterValues>({})
 
   const { data: productsRes, isLoading } = useQuery({ queryKey: ['products-admin'], queryFn: () => getProducts().then(r => r.data) })
   const { data: brandsRes } = useQuery({ queryKey: ['brands'], queryFn: () => getBrands().then(r => r.data) })
@@ -79,15 +89,15 @@ export default function ProductPage() {
   const openEdit = async (id: string) => {
     setLoadingId(id)
     try {
-      const fresh = await qc.fetchQuery({ queryKey: ['products-admin'], queryFn: () => getProducts().then(r => r.data), staleTime: 0 })
-      const record = fresh.data?.find(p => p.id === id)
+      const res = await getProductById(id)
+      const record = res.data.data
       if (record) {
         setEditing(record)
         form.setFieldsValue({
           name: record.name,
           status: record.status === 'hoat dong' ? 1 : 0,
-          brandId: brandsRes?.data?.find(b => b.name === record.brand)?.id,
-          marterialId: materialsRes?.data?.find(m => m.name === record.marterial)?.id,
+          brandId: record.brandId,
+          marterialId: record.marterialId,
         })
         setOpen(true)
       }
@@ -99,8 +109,8 @@ export default function ProductPage() {
   const openDetail = async (id: string) => {
     setLoadingId(id)
     try {
-      const fresh = await qc.fetchQuery({ queryKey: ['products-admin'], queryFn: () => getProducts().then(r => r.data), staleTime: 0 })
-      const record = fresh.data?.find(p => p.id === id)
+      const res = await getProductById(id)
+      const record = res.data.data
       if (record) {
         setDetailItem(record)
         setDetailOpen(true)
@@ -109,6 +119,19 @@ export default function ProductPage() {
       setLoadingId(null)
     }
   }
+
+  const filteredProducts = (productsRes?.data ?? []).filter(p => {
+    if (filterValues.name && !p.name.toLowerCase().includes(filterValues.name.toLowerCase())) return false
+    if (filterValues.brandId) {
+      const brandName = brandsRes?.data?.find(b => b.id === filterValues.brandId)?.name
+      if (brandName && p.brand !== brandName) return false
+    }
+    if (filterValues.marterialId) {
+      const materialName = materialsRes?.data?.find(m => m.id === filterValues.marterialId)?.name
+      if (materialName && p.marterial !== materialName) return false
+    }
+    return true
+  })
 
   const columns = [
     { title: 'Tên', dataIndex: 'name', key: 'name' },
@@ -162,8 +185,39 @@ export default function ProductPage() {
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>Thêm sản phẩm</Button>
       </div>
 
+      <Form form={filterForm} layout="vertical">
+        <FilterBox
+          onSearch={() => setFilterValues(filterForm.getFieldsValue())}
+          onReset={() => { filterForm.resetFields(); setFilterValues({}) }}
+        >
+          <Col span={6}>
+            <Form.Item name="name" label="Tên sản phẩm" style={{ marginBottom: 0 }}>
+              <Input placeholder="Tìm theo tên" allowClear />
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Form.Item name="brandId" label="Thương hiệu" style={{ marginBottom: 0 }}>
+              <Select
+                options={brandsRes?.data?.map(b => ({ value: b.id, label: b.name }))}
+                placeholder="Chọn thương hiệu"
+                allowClear
+              />
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Form.Item name="marterialId" label="Chất liệu" style={{ marginBottom: 0 }}>
+              <Select
+                options={materialsRes?.data?.map(m => ({ value: m.id, label: m.name }))}
+                placeholder="Chọn chất liệu"
+                allowClear
+              />
+            </Form.Item>
+          </Col>
+        </FilterBox>
+      </Form>
+
       <Table
-        dataSource={productsRes?.data ?? []}
+        dataSource={filteredProducts}
         columns={columns}
         rowKey="id"
         loading={isLoading}

@@ -35,14 +35,18 @@ Cart page queryFn SHALL unwrap `AxiosResponse` via `.then(r => r.data)` and comp
 - **THEN** `getCart().then(r => r.data)` returns `ApiResponse<CartItem[]>`
 - **THEN** component accesses `data?.data ?? []` to get the cart items array
 
+### Requirement: User can remove an item from their cart
+The system SHALL call `DELETE /remove-product-from-cart/{cartDetailId}` when user clicks the remove button on a cart item. `cart.service.ts` SHALL export a `removeFromCart(cartDetailId: string)` function. The cart query SHALL be invalidated on success.
 
-## MODIFIED Requirements
+#### Scenario: Cart item is removed after confirmation
+- **WHEN** user clicks the remove button and confirms
+- **THEN** `DELETE /remove-product-from-cart/{cartDetailId}` is called with the `id` of that CartItem
+- **THEN** the cart query is invalidated and the item disappears from the list
 
-### Requirement: Cart page response unwrap is consistent
-Cart page queryFn SHALL unwrap `AxiosResponse` via `.then(r => r.data)` and component SHALL access `data?.data ?? []` for the CartItem array.
+### Requirement: CartItem type exposes its own id
+`CartItem` SHALL include `id: string` at the root level. This is the CartDetail UUID needed for deletion (distinct from `productDetail.id` which is the ProductDetail UUID).
 
-#### Scenario: Cart page loads items
-- **WHEN** cart page mounts and useQuery fires
-- **THEN** `getCart().then(r => r.data)` returns `ApiResponse<CartItem[]>`
-- **THEN** component accesses `data?.data ?? []` to get the cart items array
+#### Scenario: Remove button receives correct CartDetail ID
+- **WHEN** remove button is rendered for a cart row
+- **THEN** `record.id` (CartItem root id) is passed as `cartDetailId` to `removeFromCart`
 

@@ -20,6 +20,7 @@ export default function UserLayout() {
   }
 
   const userMenuItems = [
+    { key: 'profile', label: <Link to="/profile">Tài khoản của tôi</Link> },
     ...(user?.role === 'admin'
       ? [{ key: 'admin', label: <Link to="/admin">Quản trị</Link> }]
       : []),

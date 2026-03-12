@@ -5,6 +5,9 @@ import type { ApiResponse, ProductDetailResponse, ProductResponse } from '@/type
 export const getProducts = () =>
   axiosInstance.get<ApiResponse<ProductResponse[]>>('/api/admin/san-pham')
 
+export const getProductById = (id: string) =>
+  axiosInstance.get<ApiResponse<ProductResponse>>(`/api/admin/san-pham/${id}`)
+
 export interface CreateProductBody {
   name: string
   image: string
@@ -22,6 +25,9 @@ export const updateProduct = (body: CreateProductBody & { id: string }) =>
 // ── ProductDetail (product-detail) ───────────────────────────────────────────
 export const getProductDetails = () =>
   axiosInstance.get<ApiResponse<ProductDetailResponse[]>>('/api/admin/product-detail')
+
+export const getProductDetailById = (id: string) =>
+  axiosInstance.get<ApiResponse<ProductDetailResponse>>(`/api/admin/product-detail/${id}`)
 
 export interface CreateProductDetailBody {
   name: string

@@ -2,7 +2,9 @@ export interface ProductResponse {
   id: string
   name: string
   brand: string
+  brandId: string
   marterial: string // note: typo mirrors backend field name
+  marterialId: string
   image: string
   status: 'hoat dong' | 'khong hoat dong'
   createdAt: string
@@ -16,9 +18,12 @@ export interface ProductDetailResponse {
   costPrice: number
   salePrice: number
   quantity: number
-  product: string
-  color: string
-  size: string
+  productName: string
+  productId: string
+  colorName: string
+  colorId: string
+  sizeName: string
+  sizeId: string
   images: string[]
   deleteFlag?: boolean
 }

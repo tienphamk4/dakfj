@@ -15,6 +15,7 @@ interface CatalogTableProps {
   createFn: (name: string) => Promise<unknown>
   updateFn: (id: string, name: string) => Promise<unknown>
   deleteFn: (id: string) => Promise<unknown>
+  nameFilter?: string
 }
 
 export default function CatalogTable({
@@ -24,6 +25,7 @@ export default function CatalogTable({
   createFn,
   updateFn,
   deleteFn,
+  nameFilter,
 }: CatalogTableProps) {
   const qc = useQueryClient()
   const { message } = App.useApp()
@@ -89,7 +91,7 @@ export default function CatalogTable({
   }
 
   const columns = [
-    { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
+    { title: 'STT', key: 'stt', width: 60, render: (_: unknown, __: unknown, index: number) => index + 1 },
     { title: 'Tên', dataIndex: 'name', key: 'name' },
     {
       title: 'Hành động',
@@ -127,7 +129,11 @@ export default function CatalogTable({
       </div>
 
       <Table
-        dataSource={data?.data ?? []}
+        dataSource={
+          nameFilter
+            ? (data?.data ?? []).filter(item => item.name.toLowerCase().includes(nameFilter.toLowerCase()))
+            : (data?.data ?? [])
+        }
         columns={columns}
         rowKey="id"
         loading={isLoading}

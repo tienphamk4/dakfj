@@ -6,3 +6,6 @@ export const getCart = () => axiosInstance.get<ApiResponse<CartItem[]>>('/cart')
 // BE uses GET (not POST) to add to cart
 export const addToCart = (productDetailId: string) =>
   axiosInstance.get<ApiResponse<null>>(`/add-product-to-cart/${productDetailId}`)
+
+export const removeFromCart = (cartDetailId: string) =>
+  axiosInstance.delete<ApiResponse<null>>(`/remove-product-from-cart/${cartDetailId}`)

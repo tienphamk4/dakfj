@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { App, Button, Descriptions, Drawer, Form, Image, Input, InputNumber, Modal, Popconfirm, Select, Space, Table, Tag, Typography, Upload } from 'antd'
-import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons'
+import { App, Button, Col, Descriptions, Drawer, Form, Image, Input, InputNumber, Modal, Popconfirm, Select, Space, Table, Tag, Typography, Upload } from 'antd'
+import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { UploadFile } from 'antd'
 import { getColors, getSizes } from '@/services/catalog.service'
-import { getProducts } from '@/services/product.service'
+import { getProducts, getProductDetailById } from '@/services/product.service'
 import {
   getProductDetails,
   createProductDetail,
@@ -15,6 +15,7 @@ import {
 } from '@/services/product.service'
 import { uploadMultiple } from '@/services/upload.service'
 import type { ProductDetailResponse } from '@/types'
+import FilterBox from '@/components/admin/filter-box'
 
 interface ProductDetailForm {
   name: string
@@ -106,8 +107,8 @@ export default function ProductDetailPage() {
   const openEdit = async (id: string) => {
     setLoadingId(id)
     try {
-      const fresh = await qc.fetchQuery({ queryKey: ['product-details-admin'], queryFn: () => getProductDetails().then(r => r.data), staleTime: 0 })
-      const record = fresh.data?.find(p => p.id === id)
+      const res = await getProductDetailById(id)
+      const record = res.data.data
       if (record) {
         setEditing(record)
         form.setFieldsValue({
@@ -116,9 +117,9 @@ export default function ProductDetailPage() {
           quantity: record.quantity,
           costPrice: record.costPrice,
           salePrice: record.salePrice,
-          productId: productsRes?.data?.find(p => p.name === record.product)?.id,
-          colorId: colorsRes?.data?.find(c => c.name === record.color)?.id,
-          sizeId: sizesRes?.data?.find(s => s.name === record.size)?.id,
+          productId: record.productId,
+          colorId: record.colorId,
+          sizeId: record.sizeId,
         })
         setOpen(true)
       }
@@ -130,8 +131,8 @@ export default function ProductDetailPage() {
   const openDetail = async (id: string) => {
     setLoadingId(id)
     try {
-      const fresh = await qc.fetchQuery({ queryKey: ['product-details-admin'], queryFn: () => getProductDetails().then(r => r.data), staleTime: 0 })
-      const record = fresh.data?.find(p => p.id === id)
+      const res = await getProductDetailById(id)
+      const record = res.data.data
       if (record) {
         setDetailItem(record)
         setDetailOpen(true)
@@ -141,15 +142,10 @@ export default function ProductDetailPage() {
     }
   }
 
-  const handleSearch = (values: SearchParams) => {
-    const clean = Object.fromEntries(Object.entries(values).filter(([, v]) => v !== undefined && v !== '')) as SearchParams
-    setSearchParams(Object.keys(clean).length > 0 ? clean : null)
-  }
-
   const columns = [
     { title: 'Tên', dataIndex: 'name', key: 'name' },
-    { title: 'Màu', dataIndex: 'color', key: 'color' },
-    { title: 'Size', dataIndex: 'size', key: 'size' },
+    { title: 'Màu', dataIndex: 'colorName', key: 'colorName' },
+    { title: 'Size', dataIndex: 'sizeName', key: 'sizeName' },
     { title: 'SL', dataIndex: 'quantity', key: 'quantity', align: 'center' as const },
     {
       title: 'Giá bán',
@@ -197,30 +193,45 @@ export default function ProductDetailPage() {
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>Thêm mới</Button>
       </div>
 
-      {/* Search bar */}
-      <Form form={searchForm} layout="inline" onFinish={handleSearch} style={{ marginBottom: 16 }}>
-        <Form.Item name="name"><Input placeholder="Tên sản phẩm" allowClear /></Form.Item>
-        <Form.Item name="color">
-          <Select
-            options={colorsRes?.data?.map(c => ({ value: c.id, label: c.name }))}
-            placeholder="Màu sắc"
-            allowClear
-          />
-        </Form.Item>
-        <Form.Item name="size">
-          <Select
-            options={sizesRes?.data?.map(s => ({ value: s.id, label: s.name }))}
-            placeholder="Size"
-            allowClear
-          />
-        </Form.Item>
-        <Form.Item name="salePrice"><InputNumber placeholder="Giá bán" min={0} /></Form.Item>
-        <Form.Item>
-          <Button htmlType="submit" icon={<SearchOutlined />} type="primary">Tìm</Button>
-        </Form.Item>
-        <Form.Item>
-          <Button onClick={() => { searchForm.resetFields(); setSearchParams(null) }}>Xóa lọc</Button>
-        </Form.Item>
+      {/* Filter box */}
+      <Form form={searchForm} layout="vertical">
+        <FilterBox
+          onSearch={() => {
+            const values = searchForm.getFieldsValue()
+            const clean = Object.fromEntries(Object.entries(values).filter(([, v]) => v !== undefined && v !== '' && v !== null)) as SearchParams
+            setSearchParams(Object.keys(clean).length > 0 ? clean : null)
+          }}
+          onReset={() => { searchForm.resetFields(); setSearchParams(null) }}
+        >
+          <Col span={6}>
+            <Form.Item name="name" label="Tên" style={{ marginBottom: 0 }}>
+              <Input placeholder="Tìm theo tên" allowClear />
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Form.Item name="color" label="Màu sắc" style={{ marginBottom: 0 }}>
+              <Select
+                options={colorsRes?.data?.map(c => ({ value: c.id, label: c.name }))}
+                placeholder="Chọn màu"
+                allowClear
+              />
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Form.Item name="size" label="Size" style={{ marginBottom: 0 }}>
+              <Select
+                options={sizesRes?.data?.map(s => ({ value: s.id, label: s.name }))}
+                placeholder="Chọn size"
+                allowClear
+              />
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Form.Item name="salePrice" label="Giá bán" style={{ marginBottom: 0 }}>
+              <InputNumber placeholder="Giá bán" min={0} style={{ width: '100%' }} />
+            </Form.Item>
+          </Col>
+        </FilterBox>
       </Form>
 
       <Table
@@ -301,9 +312,9 @@ export default function ProductDetailPage() {
             <Descriptions column={1} bordered size="small" style={{ marginBottom: 16 }}>
               <Descriptions.Item label="Tên">{detailItem.name}</Descriptions.Item>
               <Descriptions.Item label="Mô tả">{detailItem.description || '—'}</Descriptions.Item>
-              <Descriptions.Item label="Sản phẩm">{detailItem.product}</Descriptions.Item>
-              <Descriptions.Item label="Màu sắc">{detailItem.color}</Descriptions.Item>
-              <Descriptions.Item label="Size">{detailItem.size}</Descriptions.Item>
+              <Descriptions.Item label="Sản phẩm">{detailItem.productName}</Descriptions.Item>
+              <Descriptions.Item label="Màu sắc">{detailItem.colorName}</Descriptions.Item>
+              <Descriptions.Item label="Size">{detailItem.sizeName}</Descriptions.Item>
               <Descriptions.Item label="Số lượng">{detailItem.quantity}</Descriptions.Item>
               <Descriptions.Item label="Giá vốn">{detailItem.costPrice?.toLocaleString('vi-VN')}₫</Descriptions.Item>
               <Descriptions.Item label="Giá bán">{detailItem.salePrice?.toLocaleString('vi-VN')}₫</Descriptions.Item>
