@@ -31,12 +31,14 @@ The system SHALL call `GET /api/order/check-voucher?code=X&subTotal=Y` (Public �
 
 #### Scenario: Invalid or expired voucher
 - **WHEN** the API returns 400 with an error message
-- **THEN** an `message.error` toast shows the API message
+- **THEN** an `message.error` toast shows the API message (e.g., "Ma giam gia da het han")
 - **THEN** no discount is applied
 
 #### Scenario: Voucher removed
 - **WHEN** user clears the voucher input field and clicks "Áp dụng" with empty input
 - **THEN** discount is reset to 0 and price breakdown reflects no discount
+
+## MODIFIED Requirements
 
 ### Requirement: User can place a COD order
 The system SHALL submit `POST /api/order/pay` with `paymentMethod: "COD"`, `address` (required), optional `voucherCode`, and the `productDetail` array containing only the selected items. On `201` response FE SHALL navigate to `/order/result` passing `OrderResponse` via router state, where an Ant Design `Result` with `status="success"` displays the order code and total.
@@ -62,23 +64,8 @@ The system SHALL submit `POST /api/order/pay` with `paymentMethod: "Online"` (no
 - **THEN** `POST /api/order/pay` is called with `paymentMethod: "Online"`
 - **THEN** on success `window.location.href` is set to `res.data.data.paymentUrl`
 
-### Requirement: VNPay return page shows payment result
-The `/order/result` page (public route) SHALL read `vnp_ResponseCode` from URL query params. If `"00"`, display success message; otherwise display failure message. A COD success path also exists via router `location.state`.
-
-#### Scenario: Successful VNPay payment shows success screen
-- **WHEN** VNPay redirects back with `vnp_ResponseCode=00`
-- **THEN** user sees "Thanh toán thành công" with a "Về trang chủ" button
-
-#### Scenario: Failed VNPay payment shows failure screen
-- **WHEN** VNPay redirects back with any code other than `00`
-- **THEN** user sees "Thanh toán thất bại" with a return-home option
-
-#### Scenario: COD order result shown via router state
-- **WHEN** user arrives at `/order/result` with `location.state.paymentMethod === 'COD'`
-- **THEN** user sees `Result status="success"` with order code, total, and payment method
-
 ### Requirement: Order request payload includes voucher and address
-The `OrderRequest` sent to `POST /api/order/pay` SHALL match the updated contract — FE SHALL NOT send a `total` field; the backend computes the authoritative total.
+The `OrderRequest` sent to `POST /api/order/pay` SHALL match the updated contract:
 ```ts
 interface OrderRequest {
   productDetail: { id: string; quantity: number }[];
@@ -88,6 +75,7 @@ interface OrderRequest {
   address: string;
 }
 ```
+The FE SHALL NOT send a `total` field; the backend computes the authoritative total.
 
 #### Scenario: Payload includes voucherCode when applied
 - **WHEN** user has applied a valid voucher before submitting
@@ -100,19 +88,3 @@ interface OrderRequest {
 #### Scenario: Payload uses productDetail ids from selected items only
 - **WHEN** user selected 2 of 3 cart items
 - **THEN** `productDetail` array contains exactly 2 entries matching `{ id: productDetail.id, quantity }` for each selected item
-
-## MODIFIED Requirements
-
-### Requirement: Order confirm page unwraps ApiResponse correctly
-Order confirm page SHALL access the actual payload via `res.data.data` instead of casting `res.data as unknown as T`.
-
-#### Scenario: COD order success
-- **WHEN** `placeOrder` returns successfully with paymentMethod COD
-- **THEN** page accesses `res.data.data` to get `OrderResponse` (not `res.data as unknown as OrderResponse`)
-- **THEN** displays `order.code` in success message
-
-#### Scenario: Online order success
-- **WHEN** `placeOrder` returns successfully with paymentMethod Online
-- **THEN** page accesses `res.data.data` to get `VNPayResponse` (not `res.data as unknown as VNPayResponse`)
-- **THEN** redirects to `vnpay.paymentUrl`
-

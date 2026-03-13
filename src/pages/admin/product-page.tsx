@@ -30,6 +30,15 @@ interface FilterValues {
   marterialId?: string
 }
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:8080'
+
+const resolveImageSrc = (img: string) => {
+  if (!img) return ''
+  if (/^https?:\/\//i.test(img)) return img
+  if (img.startsWith('/')) return `${API_BASE_URL}${img}`
+  return `${API_BASE_URL}/images/${img}`
+}
+
 export default function ProductPage() {
   const qc = useQueryClient()
   const { message } = App.useApp()
@@ -51,12 +60,16 @@ export default function ProductPage() {
   const saveMutation = useMutation({
     mutationFn: async (values: ProductFormValues) => {
       let imageName = editing?.image ?? ''
+      const selectedImage = values.image?.[0]
 
       // Upload image if a new file was provided
-      const file = values.image?.[0]?.originFileObj
+      const file = selectedImage?.originFileObj
       if (file) {
         const res = await uploadFile(file, 'products')
         imageName = res.data.data
+      } else if (editing && !selectedImage) {
+        // User removed current image while editing
+        imageName = ''
       }
 
       const body: CreateProductBody = {
@@ -98,6 +111,16 @@ export default function ProductPage() {
           status: record.status === 'hoat dong' ? 1 : 0,
           brandId: record.brandId,
           marterialId: record.marterialId,
+          image: record.image
+            ? [
+                {
+                  uid: `existing-${record.id}`,
+                  name: record.image,
+                  status: 'done',
+                  url: resolveImageSrc(record.image),
+                },
+              ]
+            : [],
         })
         setOpen(true)
       }
@@ -228,7 +251,11 @@ export default function ProductPage() {
         title={editing ? 'Sửa sản phẩm' : 'Thêm sản phẩm'}
         open={open}
         onOk={() => form.submit()}
-        onCancel={() => setOpen(false)}
+        onCancel={() => {
+          setOpen(false)
+          setEditing(null)
+          form.resetFields()
+        }}
         confirmLoading={saveMutation.isPending}
         destroyOnClose
         width={560}

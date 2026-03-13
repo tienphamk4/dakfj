@@ -7,20 +7,35 @@ export interface CartItem {
     id: string
     name: string
     salePrice: number
+    quantity: number // stock quantity
+    colorName: string
+    sizeName: string
+    productName: string
     images: string[]
   }
   quantity: number
   totalPrice: number
 }
 
-export type PaymentMethod = 'COD' | 'VNPAY'
-export type PaymentStatus = 0 | 1 | 3 // 0=pending, 1=paid, 3=failed
+export type PaymentMethod = 'COD' | 'VNPAY' | 'CASH'
+export type PaymentStatus = 0 | 1 // 0=unpaid, 1=paid
 
 export interface OrderRequest {
   productDetail: { id: string; quantity: number }[]
   note: string
-  total: number
   paymentMethod: PaymentMethod
+  voucherCode?: string | null
+  address: string
+}
+
+export interface VoucherCheckResponse {
+  ma: string
+  ten: string
+  loaiGiam: number
+  giaTriGiam: number
+  discountAmount: number
+  subTotal: number
+  totalAfterDiscount: number
 }
 
 export interface OrderResponse {
@@ -28,11 +43,17 @@ export interface OrderResponse {
   code: string
   note: string
   createdAt: string
-  paymentDate: string
+  paymentDate: string | null
   paymentMethod: PaymentMethod
+  shippingFee: number
+  subTotal: number
+  discount: number
   total: number
-  status: PaymentStatus
-  userResponse: UserResponse
+  type?: 0 | 1
+  paymentStatus?: PaymentStatus | number
+  voucherCode: string | null
+  status: number
+  userResponse: UserResponse | null
   productDetailResponses: ProductDetailResponse[]
 }
 
@@ -46,7 +67,7 @@ export interface VNPayResponse {
 
 export interface OrderDetailResponse extends Omit<OrderResponse, 'status'> {
   shippingFee: number
-  type: 1 | 2
+  type: 0 | 1
   status: number
 }
 
@@ -54,6 +75,6 @@ export interface EmployeeOrderRequest {
   productDetail: { id: string; quantity: number }[]
   note: string
   total: number
-  paymentMethod: 'CASH'
-  type: 1 | 2
+  paymentMethod: PaymentMethod
+  type: 0 | 1
 }

@@ -42,10 +42,15 @@ export interface CreateProductDetailBody {
   images: string[]
 }
 
+export interface UpdateProductDetailBody extends CreateProductDetailBody {
+  id: string
+  imagesDelete?: string[]
+}
+
 export const createProductDetail = (body: CreateProductDetailBody) =>
   axiosInstance.post<ApiResponse<ProductDetailResponse>>('/api/admin/product-detail', body)
 
-export const updateProductDetail = (body: CreateProductDetailBody & { id: string }) =>
+export const updateProductDetail = (body: UpdateProductDetailBody) =>
   axiosInstance.put<ApiResponse<ProductDetailResponse>>('/api/admin/product-detail', body)
 
 export const deleteProductDetail = (id: string) =>

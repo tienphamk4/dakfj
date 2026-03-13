@@ -1,13 +1,19 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Button, Card, Empty, Popconfirm, Spin, Table, Typography } from 'antd'
+import { App, Button, Empty, InputNumber, Popconfirm, Space, Spin, Table, Typography } from 'antd'
 import { DeleteOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { getCart, removeFromCart } from '@/services/cart.service'
+import { getCart, removeFromCart, updateCartItem, clearCart } from '@/services/cart.service'
 import type { CartItem } from '@/types'
+
+const IMAGE_BASE = 'http://localhost:8080/api/upload/files/'
 
 export default function CartPage() {
   const navigate = useNavigate()
+  const { message } = App.useApp()
   const qc = useQueryClient()
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   const { data, isLoading } = useQuery({
     queryKey: ['cart'],
@@ -16,47 +22,104 @@ export default function CartPage() {
 
   const removeMutation = useMutation({
     mutationFn: (cartDetailId: string) => removeFromCart(cartDetailId),
+    onSuccess: (_, cartDetailId) => {
+      setSelectedIds(prev => prev.filter(id => id !== cartDetailId))
+      qc.invalidateQueries({ queryKey: ['cart'] })
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ cartDetailId, quantity }: { cartDetailId: string; quantity: number }) =>
+      updateCartItem(cartDetailId, quantity),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cart'] }),
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      message.error(msg ?? 'Cập nhật thất bại')
+    },
+  })
+
+  const clearMutation = useMutation({
+    mutationFn: clearCart,
+    onSuccess: () => {
+      setSelectedIds([])
+      qc.invalidateQueries({ queryKey: ['cart'] })
+    },
   })
 
   const items: CartItem[] = data?.data ?? []
 
-  const grandTotal = items.reduce((sum, item) => sum + item.totalPrice, 0)
+  const selectedSubTotal = items
+    .filter(i => selectedIds.includes(i.id))
+    .reduce((sum, i) => sum + i.productDetail.salePrice * i.quantity, 0)
+
+  const rowSelection = {
+    selectedRowKeys: selectedIds,
+    onChange: (keys: React.Key[]) => setSelectedIds(keys as string[]),
+  }
 
   const columns = [
     {
       title: 'Sản phẩm',
-      key: 'productName',
-      render: (_: unknown, record: CartItem) => record.productDetail.name,
-    },
-    {
-      title: 'Số lượng',
-      dataIndex: 'quantity',
-      key: 'quantity',
-      align: 'center' as const,
+      key: 'product',
+      render: (_: unknown, record: CartItem) => (
+        <Space>
+          {record.productDetail.images?.[0] && (
+            <img
+              src={`${IMAGE_BASE}${record.productDetail.images[0]}`}
+              alt={record.productDetail.name}
+              style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 4 }}
+            />
+          )}
+          <div>
+            <div>{record.productDetail.productName}</div>
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              {record.productDetail.colorName} / {record.productDetail.sizeName}
+            </Typography.Text>
+          </div>
+        </Space>
+      ),
     },
     {
       title: 'Đơn giá',
       key: 'salePrice',
-      render: (_: unknown, record: CartItem) => record.productDetail.salePrice.toLocaleString('vi-VN') + '₫',
       align: 'right' as const,
+      render: (_: unknown, record: CartItem) =>
+        record.productDetail.salePrice.toLocaleString('vi-VN') + '₫',
+    },
+    {
+      title: 'Số lượng',
+      key: 'quantity',
+      align: 'center' as const,
+      render: (_: unknown, record: CartItem) => (
+        <InputNumber
+          min={1}
+          max={record.productDetail.quantity}
+          value={record.quantity}
+          disabled={updateMutation.isPending}
+          onChange={val => {
+            if (val && val !== record.quantity) {
+              updateMutation.mutate({ cartDetailId: record.id, quantity: val })
+            }
+          }}
+          style={{ width: 72 }}
+        />
+      ),
     },
     {
       title: 'Thành tiền',
-      dataIndex: 'totalPrice',
       key: 'totalPrice',
-      render: (v: number) => (
+      align: 'right' as const,
+      render: (_: unknown, record: CartItem) => (
         <Typography.Text type="danger" strong>
-          {v?.toLocaleString('vi-VN')}₫
+          {record.totalPrice.toLocaleString('vi-VN')}₫
         </Typography.Text>
       ),
-      align: 'right' as const,
     },
     {
       title: '',
       key: 'remove',
       render: (_: unknown, record: CartItem) => (
-        <Popconfirm title="Xóa khỏi giỏ hàng?" onConfirm={() => removeMutation.mutate(record.id)}>
+        <Popconfirm title="Xóa sản phẩm này?" onConfirm={() => removeMutation.mutate(record.id)}>
           <Button
             size="small"
             danger
@@ -78,36 +141,52 @@ export default function CartPage() {
 
   return (
     <div>
-      <Typography.Title level={3}>Giỏ hàng</Typography.Title>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Typography.Title level={3} style={{ margin: 0 }}>Giỏ hàng</Typography.Title>
+        <Popconfirm
+          title="Xóa toàn bộ giỏ hàng?"
+          onConfirm={() => clearMutation.mutate()}
+          okText="Xóa"
+          cancelText="Hủy"
+        >
+          <Button danger loading={clearMutation.isPending}>Xóa tất cả</Button>
+        </Popconfirm>
+      </div>
+
       <Table
         dataSource={items}
         columns={columns}
         rowKey={record => record.id}
+        rowSelection={rowSelection}
         pagination={false}
         summary={() => (
           <Table.Summary>
             <Table.Summary.Row>
-              <Table.Summary.Cell index={0} colSpan={4} align="right">
-                <Typography.Text strong>Tổng cộng:</Typography.Text>
+              <Table.Summary.Cell index={0} colSpan={3} align="right">
+                <Typography.Text strong>Tạm tính ({selectedIds.length} sản phẩm):</Typography.Text>
               </Table.Summary.Cell>
               <Table.Summary.Cell index={1} align="right">
                 <Typography.Text type="danger" strong style={{ fontSize: 16 }}>
-                  {grandTotal.toLocaleString('vi-VN')}₫
+                  {selectedSubTotal.toLocaleString('vi-VN')}₫
                 </Typography.Text>
               </Table.Summary.Cell>
+              <Table.Summary.Cell index={2} />
             </Table.Summary.Row>
           </Table.Summary>
         )}
       />
-      <Card style={{ marginTop: 16, textAlign: 'right' }}>
+
+      <div style={{ marginTop: 16, textAlign: 'right' }}>
         <Button
           type="primary"
           size="large"
-          onClick={() => navigate('/order/confirm', { state: { items } })}
+          disabled={selectedIds.length === 0}
+          onClick={() => navigate('/order/confirm', { state: { selectedIds } })}
         >
-          Thanh toán
+          Đặt hàng ({selectedIds.length})
         </Button>
-      </Card>
+      </div>
     </div>
   )
 }
+

@@ -26,7 +26,11 @@ interface ProductDetailForm {
   productId: string
   colorId: string
   sizeId: string
-  images?: UploadFile[]
+}
+
+interface ProductDetailUploadFile extends UploadFile {
+  originalImage?: string
+  imageUrl?: string
 }
 
 interface SearchParams {
@@ -34,6 +38,33 @@ interface SearchParams {
   color?: string
   size?: string
   salePrice?: number
+}
+
+const fileToBase64 = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = error => reject(error)
+  })
+
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:8080'
+
+const resolveImageSrc = (img: string) => {
+  if (!img) return ''
+  if (/^https?:\/\//i.test(img)) return img
+  if (img.startsWith('/')) return `${API_BASE_URL}${img}`
+  return `${API_BASE_URL}/images/${img}`
+}
+
+const resolveImageFallback = (img: string) => {
+  if (!img || /^https?:\/\//i.test(img) || img.startsWith('/')) return undefined
+  return `${API_BASE_URL}/api/upload/files/${img}`
+}
+
+const getImageFileName = (img: string) => {
+  const cleaned = img.split('?')[0].split('#')[0]
+  return cleaned.split('/').filter(Boolean).pop() ?? cleaned
 }
 
 export default function ProductDetailPage() {
@@ -47,6 +78,11 @@ export default function ProductDetailPage() {
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [detailItem, setDetailItem] = useState<ProductDetailResponse | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
+  const [imageFileList, setImageFileList] = useState<ProductDetailUploadFile[]>([])
+  const [imagesDelete, setImagesDelete] = useState<string[]>([])
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewSrc, setPreviewSrc] = useState('')
+  const [previewFallback, setPreviewFallback] = useState<string | undefined>(undefined)
 
   const { data: detailsRes, isLoading } = useQuery({
     queryKey: ['product-details', searchParams],
@@ -64,10 +100,13 @@ export default function ProductDetailPage() {
 
   const saveMutation = useMutation({
     mutationFn: async (values: ProductDetailForm) => {
-      let uploadedImages: string[] = editing?.images ?? []
+      const newFiles: File[] = imageFileList
+        .map(file => file.originFileObj)
+        .filter((file): file is NonNullable<typeof file> => Boolean(file))
+        .map(file => file as File)
 
-      const newFiles = values.images?.filter(f => f.originFileObj).map(f => f.originFileObj!)
-      if (newFiles && newFiles.length > 0) {
+      let uploadedImages: string[] = []
+      if (newFiles.length > 0) {
         const res = await uploadMultiple(newFiles, 'product-details')
         uploadedImages = res.data.data
       }
@@ -85,12 +124,19 @@ export default function ProductDetailPage() {
         images: uploadedImages,
       }
 
-      if (editing) return updateProductDetail({ ...body, id: editing.id })
+      if (editing) {
+        const deleteImageNames = imagesDelete.map(getImageFileName)
+        return updateProductDetail({ ...body, id: editing.id, imagesDelete: deleteImageNames })
+      }
       return createProductDetail(body)
     },
     onSuccess: () => {
       message.success(editing ? 'Cập nhật thành công!' : 'Thêm chi tiết thành công!')
       setOpen(false)
+      setEditing(null)
+      setImageFileList([])
+      setImagesDelete([])
+      form.resetFields()
       invalidate()
     },
     onError: () => message.error('Thao tác thất bại.'),
@@ -102,7 +148,13 @@ export default function ProductDetailPage() {
     onError: () => message.error('Xóa thất bại.'),
   })
 
-  const openCreate = () => { setEditing(null); form.resetFields(); setOpen(true) }
+  const openCreate = () => {
+    setEditing(null)
+    setImagesDelete([])
+    setImageFileList([])
+    form.resetFields()
+    setOpen(true)
+  }
 
   const openEdit = async (id: string) => {
     setLoadingId(id)
@@ -111,6 +163,17 @@ export default function ProductDetailPage() {
       const record = res.data.data
       if (record) {
         setEditing(record)
+        setImagesDelete([])
+        setImageFileList(
+          (record.images ?? []).map((img, index) => ({
+            uid: `existing-${index}-${img}`,
+            name: getImageFileName(img),
+            status: 'done',
+            url: resolveImageSrc(img),
+            originalImage: img,
+            imageUrl: resolveImageSrc(img),
+          })),
+        )
         form.setFieldsValue({
           name: record.name,
           description: record.description,
@@ -186,6 +249,22 @@ export default function ProductDetailPage() {
     },
   ]
 
+  const handleUploadPreview = async (file: ProductDetailUploadFile) => {
+    let src = file.url ?? file.thumbUrl ?? file.imageUrl ?? ''
+
+    if (!src && file.originFileObj) {
+      src = await fileToBase64(file.originFileObj as File)
+    }
+
+    if (!src && file.originalImage) {
+      src = resolveImageSrc(file.originalImage)
+    }
+
+    setPreviewSrc(src)
+    setPreviewFallback(file.originalImage ? resolveImageFallback(file.originalImage) : undefined)
+    setPreviewOpen(true)
+  }
+
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -246,7 +325,13 @@ export default function ProductDetailPage() {
         title={editing ? 'Sửa chi tiết sản phẩm' : 'Thêm chi tiết sản phẩm'}
         open={open}
         onOk={() => form.submit()}
-        onCancel={() => setOpen(false)}
+        onCancel={() => {
+          setOpen(false)
+          setEditing(null)
+          setImagesDelete([])
+          setImageFileList([])
+          form.resetFields()
+        }}
         confirmLoading={saveMutation.isPending}
         destroyOnClose
         width={640}
@@ -285,13 +370,26 @@ export default function ProductDetailPage() {
               <InputNumber min={0} style={{ width: '100%' }} formatter={v => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
             </Form.Item>
           </Space>
-          <Form.Item
-            name="images"
-            label="Ảnh sản phẩm"
-            valuePropName="fileList"
-            getValueFromEvent={e => Array.isArray(e) ? e : e?.fileList}
-          >
-            <Upload beforeUpload={() => false} listType="picture-card" multiple>
+          <Form.Item label="Ảnh sản phẩm">
+            <Upload
+              beforeUpload={() => false}
+              listType="picture-card"
+              multiple
+              fileList={imageFileList}
+              onChange={({ fileList }) => setImageFileList(fileList as ProductDetailUploadFile[])}
+              onPreview={file => handleUploadPreview(file as ProductDetailUploadFile)}
+              onRemove={file => {
+                const removedImageName =
+                  (file as ProductDetailUploadFile).originalImage
+                    ? getImageFileName((file as ProductDetailUploadFile).originalImage!)
+                    : file.name
+
+                if (editing && removedImageName) {
+                  setImagesDelete(prev => (prev.includes(removedImageName) ? prev : [...prev, removedImageName]))
+                }
+                return true
+              }}
+            >
               <div>
                 <PlusOutlined />
                 <div style={{ marginTop: 8 }}>Upload</div>
@@ -319,27 +417,47 @@ export default function ProductDetailPage() {
               <Descriptions.Item label="Giá vốn">{detailItem.costPrice?.toLocaleString('vi-VN')}₫</Descriptions.Item>
               <Descriptions.Item label="Giá bán">{detailItem.salePrice?.toLocaleString('vi-VN')}₫</Descriptions.Item>
             </Descriptions>
-            {detailItem.images?.length > 0 && (
-              <>
-                <Typography.Text strong>Hình ảnh</Typography.Text>
-                <Image.PreviewGroup>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
-                    {detailItem.images.map((img, i) => (
-                      <Image
-                        key={i}
-                        src={`${import.meta.env.VITE_API_BASE_URL}/images/${img}`}
-                        width={80}
-                        height={80}
-                        style={{ objectFit: 'cover', borderRadius: 4 }}
-                      />
-                    ))}
-                  </div>
-                </Image.PreviewGroup>
-              </>
+            <Typography.Text strong>Hình ảnh</Typography.Text>
+            {detailItem.images?.length > 0 ? (
+              <Image.PreviewGroup>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                  {detailItem.images.map((img, i) => (
+                    <Image
+                      key={i}
+                      src={resolveImageSrc(img)}
+                      fallback={resolveImageFallback(img)}
+                      width={80}
+                      height={80}
+                      style={{ objectFit: 'cover', borderRadius: 4 }}
+                    />
+                  ))}
+                </div>
+              </Image.PreviewGroup>
+            ) : (
+              <Typography.Text type="secondary" style={{ marginLeft: 8 }}>—</Typography.Text>
             )}
           </>
         )}
       </Drawer>
+
+      {previewSrc ? (
+        <Image
+          style={{ display: 'none' }}
+          src={previewSrc}
+          fallback={previewFallback}
+          preview={{
+            visible: previewOpen,
+            src: previewSrc,
+            onVisibleChange: visible => setPreviewOpen(visible),
+            afterOpenChange: visible => {
+              if (!visible) {
+                setPreviewSrc('')
+                setPreviewFallback(undefined)
+              }
+            },
+          }}
+        />
+      ) : null}
     </>
   )
 }

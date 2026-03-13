@@ -7,6 +7,7 @@ import {
   DashboardOutlined,
   FontColorsOutlined,
   LogoutOutlined,
+  OrderedListOutlined,
   ScissorOutlined,
   ShopOutlined,
   TagOutlined,
@@ -22,6 +23,7 @@ const menuItems = [
   { key: '/admin', icon: <DashboardOutlined />, label: <Link to="/admin">Dashboard</Link> },
   { key: '/admin/san-pham', icon: <ShopOutlined />, label: <Link to="/admin/san-pham">Sản phẩm</Link> },
   { key: '/admin/product-detail', icon: <AppstoreOutlined />, label: <Link to="/admin/product-detail">Chi tiết SP</Link> },
+  { key: '/admin/orders', icon: <OrderedListOutlined />, label: <Link to="/admin/orders">Đơn hàng</Link> },
   {
     key: 'catalog',
     icon: <AppstoreOutlined />,
@@ -41,6 +43,9 @@ export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const { token } = theme.useToken()
   const location = useLocation()
+  const selectedKey = location.pathname.startsWith('/admin/orders')
+    ? '/admin/orders'
+    : location.pathname
   const navigate = useNavigate()
   const { user, clearAuth } = useAuthStore()
 
@@ -67,7 +72,7 @@ export default function AdminLayout() {
         </div>
         <Menu
           mode="inline"
-          selectedKeys={[location.pathname]}
+          selectedKeys={[selectedKey]}
           defaultOpenKeys={['catalog']}
           items={menuItems}
           style={{ borderRight: 0 }}

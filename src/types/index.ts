@@ -19,6 +19,7 @@ export type {
   PaymentMethod,
   PaymentStatus,
   OrderRequest,
+  VoucherCheckResponse,
   OrderResponse,
   VNPayResponse,
   OrderDetailResponse,

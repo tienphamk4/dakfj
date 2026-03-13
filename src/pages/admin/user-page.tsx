@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { App, Button, Form, Input, Modal, Popconfirm, Select, Space, Table, Tag, Typography } from 'antd'
+import { App, Button, Col, Form, Input, Modal, Popconfirm, Select, Space, Table, Tag, Typography } from 'antd'
 import { EditOutlined, KeyOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getAdminUsers, createAdminUser, updateAdminUser, deleteAdminUser, resetAdminUserPassword } from '@/services/user-admin.service'
 import type { UserAdminResponse } from '@/types'
+import FilterBox from '@/components/admin/filter-box'
 
 interface UserFormValues {
   name: string
@@ -14,12 +15,19 @@ interface UserFormValues {
   role: string
 }
 
+interface FilterValues {
+  keyword?: string
+  role?: string
+}
+
 export default function UserPage() {
   const qc = useQueryClient()
   const { message } = App.useApp()
   const [form] = Form.useForm<UserFormValues>()
+  const [filterForm] = Form.useForm<FilterValues>()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<UserAdminResponse | null>(null)
+  const [filterValues, setFilterValues] = useState<FilterValues>({})
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-users'],
@@ -27,6 +35,14 @@ export default function UserPage() {
   })
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['admin-users'] })
+
+  const allUsers = data?.data ?? []
+  const filteredUsers = allUsers.filter(u => {
+    const kw = (filterValues.keyword ?? '').trim().toLowerCase()
+    const matchKw = !kw || u.name?.toLowerCase().includes(kw) || u.email?.toLowerCase().includes(kw) || u.phone?.includes(kw)
+    const matchRole = !filterValues.role || u.role === filterValues.role
+    return matchKw && matchRole
+  })
 
   const saveMutation = useMutation({
     mutationFn: (values: UserFormValues) => {
@@ -124,10 +140,36 @@ export default function UserPage() {
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>Thêm mới</Button>
       </div>
 
+      <Form form={filterForm} layout="vertical">
+        <FilterBox
+          onSearch={() => setFilterValues(filterForm.getFieldsValue())}
+          onReset={() => { filterForm.resetFields(); setFilterValues({}) }}
+        >
+          <Col span={8}>
+            <Form.Item name="keyword" label="Từ khóa" style={{ marginBottom: 0 }}>
+              <Input placeholder="Tìm theo tên, email, điện thoại..." allowClear />
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Form.Item name="role" label="Vai trò" style={{ marginBottom: 0 }}>
+              <Select
+                placeholder="Chọn vai trò"
+                allowClear
+                options={[
+                  { value: 'admin', label: 'Admin' },
+                  { value: 'employee', label: 'Nhân viên' },
+                  { value: 'user', label: 'Người dùng' },
+                ]}
+              />
+            </Form.Item>
+          </Col>
+        </FilterBox>
+      </Form>
+
       <Table
         rowKey="id"
         loading={isLoading}
-        dataSource={data?.data ?? []}
+        dataSource={filteredUsers}
         columns={columns}
         pagination={{ pageSize: 10 }}
       />

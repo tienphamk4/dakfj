@@ -4,7 +4,7 @@ import { MinusOutlined, PlusOutlined } from '@ant-design/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { getProducts } from '@/services/product.service'
 import { createEmployeeOrder } from '@/services/employee.service'
-import type { EmployeeOrderRequest } from '@/types'
+import type { EmployeeOrderRequest, PaymentMethod } from '@/types'
 
 interface LineItem {
   id: string
@@ -15,7 +15,8 @@ interface LineItem {
 
 interface PosFormValues {
   note?: string
-  type: 1 | 2
+  type: 0 | 1
+  paymentMethod: PaymentMethod
   address?: string
   shippingFee?: number
 }
@@ -24,7 +25,7 @@ export default function PosPage() {
   const { message } = App.useApp()
   const [form] = Form.useForm<PosFormValues>()
   const [items, setItems] = useState<LineItem[]>([])
-  const [orderType, setOrderType] = useState<1 | 2>(1)
+  const [orderType, setOrderType] = useState<0 | 1>(0)
 
   const { data: productsRes, isLoading } = useQuery({
     queryKey: ['products-admin'],
@@ -69,8 +70,8 @@ export default function PosPage() {
     const body: EmployeeOrderRequest = {
       productDetail: items.map(i => ({ id: i.id, quantity: i.quantity })),
       note: values.note ?? '',
-      total: subtotal + (values.type === 2 ? (values.shippingFee ?? 0) : 0),
-      paymentMethod: 'CASH',
+      total: subtotal + (values.type === 1 ? (values.shippingFee ?? 0) : 0),
+      paymentMethod: values.paymentMethod,
       type: values.type,
     }
     createMutation.mutate(body)
@@ -90,7 +91,7 @@ export default function PosPage() {
                 (option?.label as string ?? '').toLowerCase().includes(input.toLowerCase())
               }
               options={productsRes?.data?.map(p => ({ value: p.id, label: p.name }))}
-              onSelect={(val: string) => { addProduct(val) }}
+              onSelect={(val: string | null) => { if (val) addProduct(val) }}
               value={null}
             />
             {items.map(item => (
@@ -115,18 +116,18 @@ export default function PosPage() {
 
         <Col span={10}>
           <Card title="Thông tin đơn hàng">
-            <Form form={form} layout="vertical" onFinish={onFinish} initialValues={{ type: 1 }}>
+            <Form form={form} layout="vertical" onFinish={onFinish} initialValues={{ type: 0, paymentMethod: 'CASH' }}>
               <Form.Item name="type" label="Loại đơn">
                 <Select
                   options={[
-                    { value: 1, label: 'Tại quầy' },
-                    { value: 2, label: 'Giao hàng' },
+                    { value: 0, label: 'Tại quầy' },
+                    { value: 1, label: 'Online' },
                   ]}
-                  onChange={(v: 1 | 2) => setOrderType(v)}
+                  onChange={(v: 0 | 1) => setOrderType(v)}
                 />
               </Form.Item>
 
-              {orderType === 2 && (
+              {orderType === 1 && (
                 <>
                   <Form.Item name="address" label="Địa chỉ giao" rules={[{ required: true, message: 'Nhập địa chỉ giao' }]}>
                     <Input />
@@ -141,8 +142,13 @@ export default function PosPage() {
                 <Input.TextArea rows={2} />
               </Form.Item>
 
-              <Form.Item label="Thanh toán">
-                <Input value="CASH" disabled />
+              <Form.Item name="paymentMethod" label="Thanh toán">
+                <Select
+                  options={[
+                    { value: 'VNPAY', label: 'VNPAY' },
+                    { value: 'CASH', label: 'CASH' },
+                  ]}
+                />
               </Form.Item>
 
               <Divider />

@@ -6,11 +6,12 @@ import { getUserOrders } from '@/services/user-orders.service'
 import type { OrderResponse } from '@/types'
 
 const STATUS_LABELS: Record<number, { label: string; color: string }> = {
-  0: { label: 'Chờ xử lý', color: 'default' },
-  1: { label: 'Đã thanh toán', color: 'blue' },
-  2: { label: 'Đang giao', color: 'orange' },
-  3: { label: 'Hoàn thành', color: 'green' },
-  [-1]: { label: 'Đã hủy', color: 'red' },
+  0: { label: 'Chờ xác nhận', color: 'gold' },
+  1: { label: 'Đã xác nhận', color: 'blue' },
+  2: { label: 'Đang giao hàng', color: 'cyan' },
+  3: { label: 'Đã hủy', color: 'red' },
+  4: { label: 'Đơn bị hoàn', color: 'volcano' },
+  5: { label: 'Hoàn thành', color: 'green' },
 }
 
 export default function UserOrdersPage() {

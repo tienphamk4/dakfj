@@ -7,9 +7,10 @@ interface FilterBoxProps {
   onSearch: () => void
   onReset?: () => void
   defaultOpen?: boolean
+  extraTopContent?: React.ReactNode
 }
 
-export default function FilterBox({ children, onSearch, onReset, defaultOpen = false }: FilterBoxProps) {
+export default function FilterBox({ children, onSearch, onReset, defaultOpen = false, extraTopContent }: FilterBoxProps) {
   const [open, setOpen] = useState(defaultOpen)
 
   return (
@@ -23,6 +24,8 @@ export default function FilterBox({ children, onSearch, onReset, defaultOpen = f
           Tìm kiếm
         </Button>
       </div>
+
+      {extraTopContent && <div style={{ marginBottom: 12 }}>{extraTopContent}</div>}
 
       {open && (
         <div

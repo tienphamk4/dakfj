@@ -29,6 +29,8 @@ const ProductPage = lazy(() => import('@/pages/admin/product-page'))
 const ProductDetailPage = lazy(() => import('@/pages/admin/product-detail-page'))
 const UserAdminPage = lazy(() => import('@/pages/admin/user-page'))
 const VoucherPage = lazy(() => import('@/pages/admin/voucher-page'))
+const AdminOrdersPage = lazy(() => import('@/pages/admin/orders-page'))
+const AdminOrderDetailPage = lazy(() => import('@/pages/admin/order-detail-page'))
 
 const EmployeePosPage = lazy(() => import('@/pages/employee/pos-page'))
 const EmployeeOrdersPage = lazy(() => import('@/pages/employee/orders-page'))
@@ -80,6 +82,8 @@ export const router = createBrowserRouter([
           { path: '/admin/size', element: wrap(<SizePage />) },
           { path: '/admin/san-pham', element: wrap(<ProductPage />) },
           { path: '/admin/product-detail', element: wrap(<ProductDetailPage />) },
+          { path: '/admin/orders', element: wrap(<AdminOrdersPage />) },
+          { path: '/admin/orders/:id', element: wrap(<AdminOrderDetailPage />) },
           { path: '/admin/users', element: wrap(<UserAdminPage />) },
           { path: '/admin/vouchers', element: wrap(<VoucherPage />) },
         ],
