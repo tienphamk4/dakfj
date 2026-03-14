@@ -1,9 +1,11 @@
 import { useNavigate } from 'react-router-dom'
-import { App, Empty, Table, Tag, Typography } from 'antd'
+import { Button, Empty, Table, Tag, Typography } from 'antd'
+import { EyeOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { getUserOrders } from '@/services/user-orders.service'
 import type { OrderResponse } from '@/types'
+import type { ColumnsType } from 'antd/es/table'
 
 const STATUS_LABELS: Record<number, { label: string; color: string }> = {
   0: { label: 'Chờ xác nhận', color: 'gold' },
@@ -16,7 +18,6 @@ const STATUS_LABELS: Record<number, { label: string; color: string }> = {
 
 export default function UserOrdersPage() {
   const navigate = useNavigate()
-  const { message } = App.useApp()
 
   const { data, isLoading } = useQuery({
     queryKey: ['user-orders'],
@@ -25,7 +26,7 @@ export default function UserOrdersPage() {
 
   const orders = data?.data ?? []
 
-  const columns = [
+  const columns: ColumnsType<OrderResponse> = [
     {
       title: 'STT',
       key: 'stt',
@@ -54,6 +55,16 @@ export default function UserOrdersPage() {
       key: 'createdAt',
       render: (v: string) => dayjs(v).format('DD/MM/YYYY HH:mm'),
     },
+    {
+      title: 'Thao tác',
+      key: 'action',
+      width: 100,
+      render: (_: unknown, record: OrderResponse) => (
+        <Button icon={<EyeOutlined />} onClick={() => navigate(`/orders/${record.id}`)}>
+          Xem
+        </Button>
+      ),
+    },
   ]
 
   return (
@@ -69,8 +80,6 @@ export default function UserOrdersPage() {
           dataSource={orders}
           columns={columns}
           pagination={{ pageSize: 10 }}
-          onRow={record => ({ onClick: () => navigate(`/orders/${record.id}`) })}
-          rowClassName={() => 'cursor-pointer'}
         />
       )}
     </div>

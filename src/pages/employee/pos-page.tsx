@@ -63,9 +63,46 @@ interface OrderTab {
   orderCode?: string
 }
 
-let tabCounter = 0
+const POS_TABS_STORAGE_KEY = 'employee-pos-tabs-v1'
+const POS_ACTIVE_TAB_STORAGE_KEY = 'employee-pos-active-tab-v1'
+const POS_TAB_COUNTER_STORAGE_KEY = 'employee-pos-tab-counter-v1'
+
+const isBrowser = typeof window !== 'undefined'
+
+const readTabCounter = () => {
+  if (!isBrowser) return 0
+  const raw = window.localStorage.getItem(POS_TAB_COUNTER_STORAGE_KEY)
+  const parsed = raw ? Number(raw) : 0
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
+}
+
+const persistTabCounter = (value: number) => {
+  if (!isBrowser) return
+  window.localStorage.setItem(POS_TAB_COUNTER_STORAGE_KEY, String(value))
+}
+
+const loadTabsFromStorage = (): OrderTab[] => {
+  if (!isBrowser) return []
+  const raw = window.localStorage.getItem(POS_TABS_STORAGE_KEY)
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(tab => tab && typeof tab.id === 'string' && typeof tab.label === 'string' && Array.isArray(tab.items)) as OrderTab[]
+  } catch {
+    return []
+  }
+}
+
+const loadActiveTabIdFromStorage = (): string | null => {
+  if (!isBrowser) return null
+  return window.localStorage.getItem(POS_ACTIVE_TAB_STORAGE_KEY)
+}
+
+let tabCounter = readTabCounter()
 const createNewTab = (): OrderTab => {
   tabCounter += 1
+  persistTabCounter(tabCounter)
   return {
     id: `tab-${Date.now()}-${tabCounter}`,
     label: `Đơn ${tabCounter}`,
@@ -548,8 +585,8 @@ export default function PosPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   // Tabs
-  const [tabs, setTabs] = useState<OrderTab[]>([])
-  const [activeTabId, setActiveTabId] = useState<string | null>(null)
+  const [tabs, setTabs] = useState<OrderTab[]>(() => loadTabsFromStorage())
+  const [activeTabId, setActiveTabId] = useState<string | null>(() => loadActiveTabIdFromStorage())
   const [creatingTabId, setCreatingTabId] = useState<string | null>(null)
 
   // Pending VNPAY: lưu popup window và tabId để đóng khi thanh toán xong
@@ -561,6 +598,35 @@ export default function PosPage() {
       pendingVnpayRef.current?.popup?.close()
     }
   }, [])
+
+  useEffect(() => {
+    if (!isBrowser) return
+
+    if (tabs.length === 0) {
+      window.localStorage.removeItem(POS_TABS_STORAGE_KEY)
+      window.localStorage.removeItem(POS_ACTIVE_TAB_STORAGE_KEY)
+      return
+    }
+
+    window.localStorage.setItem(POS_TABS_STORAGE_KEY, JSON.stringify(tabs))
+    if (activeTabId) {
+      window.localStorage.setItem(POS_ACTIVE_TAB_STORAGE_KEY, activeTabId)
+    }
+  }, [tabs, activeTabId])
+
+  useEffect(() => {
+    if (tabs.length === 0) {
+      if (activeTabId !== null) {
+        setActiveTabId(null)
+      }
+      return
+    }
+
+    const hasActiveTab = activeTabId ? tabs.some(tab => tab.id === activeTabId) : false
+    if (!hasActiveTab) {
+      setActiveTabId(tabs[tabs.length - 1].id)
+    }
+  }, [tabs, activeTabId])
 
   const { data: productsRes, isLoading } = useQuery({
     queryKey: ['products-pos'],

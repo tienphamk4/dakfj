@@ -1,13 +1,20 @@
-import { useEffect } from 'react'
-import { App, Button, Card, Divider, Form, Input, Typography } from 'antd'
+import { useEffect, useState } from 'react'
+import { App, Avatar, Button, Card, Divider, Form, Input, Space, Typography, Upload } from 'antd'
+import { UploadOutlined, UserOutlined } from '@ant-design/icons'
+import type { UploadFile } from 'antd'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { getUserProfile, updateUserProfile, changePassword } from '@/services/user-profile.service'
+import { uploadFile } from '@/services/upload.service'
 import type { UpdateProfileRequest, ChangePasswordRequest } from '@/types'
+import { resolveImageUrl } from '@/utils/image-url'
+import { useAuthStore } from '@/store/use-auth-store'
 
 export default function ProfilePage() {
   const { message } = App.useApp()
+  const patchUser = useAuthStore(s => s.patchUser)
   const [profileForm] = Form.useForm<UpdateProfileRequest>()
   const [passwordForm] = Form.useForm<ChangePasswordRequest & { confirmNewPassword: string }>()
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
   const { data, isLoading } = useQuery({
     queryKey: ['user-profile'],
@@ -16,6 +23,13 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (data?.data) {
+      patchUser({
+        name: data.data.name,
+        email: data.data.email,
+        phone: data.data.phone,
+        address: data.data.address,
+        avatar: data.data.avatar,
+      })
       profileForm.setFieldsValue({
         name: data.data.name,
         phone: data.data.phone,
@@ -23,11 +37,20 @@ export default function ProfilePage() {
         avatar: data.data.avatar,
       })
     }
-  }, [data, profileForm])
+  }, [data, patchUser, profileForm])
 
   const updateMutation = useMutation({
     mutationFn: (values: UpdateProfileRequest) => updateUserProfile(values),
-    onSuccess: () => message.success('Cập nhật thông tin thành công!'),
+    onSuccess: (res) => {
+      patchUser({
+        name: res.data.data.name,
+        email: res.data.data.email,
+        phone: res.data.data.phone,
+        address: res.data.data.address,
+        avatar: res.data.data.avatar,
+      })
+      message.success('Cập nhật thông tin thành công!')
+    },
     onError: () => message.error('Cập nhật thất bại.'),
   })
 
@@ -52,6 +75,19 @@ export default function ProfilePage() {
     passwordMutation.mutate(rest)
   }
 
+  const avatarValue = Form.useWatch('avatar', profileForm)
+  const avatarSrc = resolveImageUrl(avatarValue)
+  const avatarFileList: UploadFile[] = avatarValue
+    ? [
+        {
+          uid: 'avatar-current',
+          name: 'avatar',
+          status: 'done',
+          url: avatarSrc,
+        },
+      ]
+    : []
+
   return (
     <div>
 
@@ -71,8 +107,35 @@ export default function ProfilePage() {
           <Form.Item name="address" label="Địa chỉ">
             <Input />
           </Form.Item>
-          <Form.Item name="avatar" label="Avatar URL">
-            <Input />
+          <Form.Item name="avatar" label="Ảnh đại diện">
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <Space align="center" size={12}>
+                <Upload
+                  accept="image/*"
+                  maxCount={1}
+                  showUploadList={{ showPreviewIcon: false, showRemoveIcon: false }}
+                  fileList={avatarFileList}
+                  customRequest={async options => {
+                    const file = options.file as File
+                    setUploadingAvatar(true)
+                    try {
+                      const response = await uploadFile(file, 'avatar')
+                      const nextAvatar = response.data.data
+                      profileForm.setFieldValue('avatar', nextAvatar)
+                      // message.success('Upload ảnh thành công')
+                      options.onSuccess?.(response.data)
+                    } catch {
+                      message.error('Upload ảnh thất bại')
+                      options.onError?.(new Error('Upload avatar failed'))
+                    } finally {
+                      setUploadingAvatar(false)
+                    }
+                  }}
+                >
+                  <Button icon={<UploadOutlined />} loading={uploadingAvatar}>Chọn ảnh và upload</Button>
+                </Upload>
+              </Space>
+            </Space>
           </Form.Item>
           <Button type="primary" htmlType="submit" loading={updateMutation.isPending}>
             Lưu thay đổi
