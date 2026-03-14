@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons'
 import { useAuthStore } from '@/store/use-auth-store'
 import { logoutApi } from '@/services/auth.service'
+import NotificationBell from '@/components/NotificationBell'
 
 const { Header, Sider, Content } = Layout
 
@@ -58,7 +59,8 @@ export default function EmployeeLayout() {
       </Sider>
 
       <Layout>
-        <Header style={{ background: '#fff', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', boxShadow: '0 1px 4px rgba(0,0,0,.08)' }}>
+        <Header style={{ background: '#fff', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16, boxShadow: '0 1px 4px rgba(0,0,0,.08)' }}>
+          <NotificationBell role="employee" />
           <Dropdown menu={avatarMenu} placement="bottomRight">
             <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
               <Avatar icon={<UserOutlined />} />

@@ -26,6 +26,7 @@ export interface OrderRequest {
   paymentMethod: PaymentMethod
   voucherCode?: string | null
   address: string
+  isCounter: boolean
 }
 
 export interface VoucherCheckResponse {
@@ -77,4 +78,6 @@ export interface EmployeeOrderRequest {
   total: number
   paymentMethod: PaymentMethod
   type: 0 | 1
+  phoneNumber?: string
+  voucherCode?: string | null
 }

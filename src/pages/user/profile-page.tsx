@@ -54,7 +54,7 @@ export default function ProfilePage() {
 
   return (
     <div>
-      
+
 
       <Card loading={isLoading}>
         <Typography.Title level={4} style={{ marginTop: 0 }}>Thông tin cá nhân</Typography.Title>
@@ -83,7 +83,7 @@ export default function ProfilePage() {
       <Divider />
 
       <Card>
-      <Typography.Title level={4}>Đổi mật khẩu</Typography.Title>
+        <Typography.Title level={4}>Đổi mật khẩu</Typography.Title>
 
         <Form form={passwordForm} layout="vertical" onFinish={onPasswordFinish}>
           <Form.Item

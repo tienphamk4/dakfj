@@ -11,6 +11,7 @@ export type {
   UserProfileResponse,
   UpdateProfileRequest,
   ChangePasswordRequest,
+  NotificationMessage,
 } from './api.types'
 export type { Brand, Color, Material, Size } from './catalog.types'
 export type { ProductResponse, ProductDetailResponse } from './product.types'

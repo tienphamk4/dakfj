@@ -45,6 +45,8 @@ export interface VoucherResponse {
   ma: string
   ten: string
   loaiGiam: 0 | 1
+  toiThieu: number
+  giaTriGiam: number
   toiDa: number
   trangThai: 0 | 1
   ngayBatDau: string
@@ -55,6 +57,8 @@ export interface CreateVoucherRequest {
   ma: string
   ten: string
   loaiGiam: 0 | 1
+  toiThieu: number
+  giaTriGiam: number
   toiDa: number
   trangThai: 0 | 1
   ngayBatDau: string
@@ -88,4 +92,14 @@ export interface LoginResponse {
   accessToken: string
   refreshToken: string
   userResponse: UserResponse
+}
+
+export interface NotificationMessage {
+  id: string
+  title: string
+  message: string
+  type: 'NEW_ORDER' | 'VNPAY_SUCCESS' | string
+  status?: number
+  orderId?: string
+  createdAt?: string | Date
 }

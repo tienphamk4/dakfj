@@ -15,6 +15,7 @@ import {
 import { uploadFile } from '@/services/upload.service'
 import type { ProductResponse } from '@/types'
 import FilterBox from '@/components/admin/filter-box'
+import { resolveImageUrl } from '@/utils/image-url'
 
 interface ProductFormValues {
   name: string
@@ -28,15 +29,6 @@ interface FilterValues {
   name?: string
   brandId?: string
   marterialId?: string
-}
-
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:8080'
-
-const resolveImageSrc = (img: string) => {
-  if (!img) return ''
-  if (/^https?:\/\//i.test(img)) return img
-  if (img.startsWith('/')) return `${API_BASE_URL}${img}`
-  return `${API_BASE_URL}/images/${img}`
 }
 
 export default function ProductPage() {
@@ -117,7 +109,7 @@ export default function ProductPage() {
                   uid: `existing-${record.id}`,
                   name: record.image,
                   status: 'done',
-                  url: resolveImageSrc(record.image),
+                  url: resolveImageUrl(record.image),
                 },
               ]
             : [],
@@ -163,7 +155,7 @@ export default function ProductPage() {
       dataIndex: 'image',
       key: 'image',
       render: (src: string) =>
-        src ? <img src={`${import.meta.env.VITE_API_BASE_URL}/images/${src}`} alt="" style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4 }} /> : '—',
+        resolveImageUrl(src) ? <img src={resolveImageUrl(src)} alt="" style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4 }} /> : '—',
     },
     {
       title: 'Trạng thái',
@@ -298,7 +290,7 @@ export default function ProductPage() {
             <Descriptions.Item label="Tên">{detailItem.name}</Descriptions.Item>
             <Descriptions.Item label="Ảnh">
               {detailItem.image
-                ? <Image src={`${import.meta.env.VITE_API_BASE_URL}/images/${detailItem.image}`} width={80} height={80} style={{ objectFit: 'cover', borderRadius: 4 }} />
+                ? <Image src={resolveImageUrl(detailItem.image)} width={80} height={80} style={{ objectFit: 'cover', borderRadius: 4 }} />
                 : '—'}
             </Descriptions.Item>
             <Descriptions.Item label="Thương hiệu">{detailItem.brand}</Descriptions.Item>

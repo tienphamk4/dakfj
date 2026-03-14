@@ -18,8 +18,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { getCart } from '@/services/cart.service'
 import { checkVoucher, placeOrder } from '@/services/order.service'
 import type { CartItem, OrderRequest, OrderResponse, PaymentMethod, VNPayResponse, VoucherCheckResponse } from '@/types'
-
-const IMAGE_BASE = 'http://localhost:8080/api/upload/files/'
+import { resolveImageUrl } from '@/utils/image-url'
 const SHIPPING_FEE = 30_000
 
 interface OrderForm {
@@ -102,6 +101,7 @@ export default function OrderConfirmPage() {
       address: values.address,
       paymentMethod: values.paymentMethod,
       voucherCode: voucherResult ? voucherCode : null,
+      isCounter: false,
     }
     orderMutation.mutate(req)
   }
@@ -112,9 +112,9 @@ export default function OrderConfirmPage() {
       key: 'product',
       render: (_: unknown, record: CartItem) => (
         <Space>
-          {record.productDetail.images?.[0] && (
+          {resolveImageUrl(record.productDetail.images?.[0]) && (
             <img
-              src={`${IMAGE_BASE}${record.productDetail.images[0]}`}
+              src={resolveImageUrl(record.productDetail.images?.[0])}
               alt={record.productDetail.name}
               style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4 }}
             />

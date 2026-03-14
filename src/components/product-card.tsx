@@ -1,6 +1,7 @@
 import { Button, Card, Tag, Typography } from 'antd'
 import { ShoppingCartOutlined } from '@ant-design/icons'
 import type { ProductDetailResponse } from '@/types'
+import { resolveImageUrl } from '@/utils/image-url'
 
 interface Props {
   product: ProductDetailResponse
@@ -9,9 +10,7 @@ interface Props {
 }
 
 export default function ProductCard({ product, onAddToCart, loading }: Props) {
-  const imageUrl = product.images?.[0]
-    ? `${import.meta.env.VITE_API_BASE_URL}/images/${product.images[0]}`
-    : undefined
+  const imageUrl = resolveImageUrl(product.images?.[0])
 
   return (
     <Card

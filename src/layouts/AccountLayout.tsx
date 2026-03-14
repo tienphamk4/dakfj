@@ -3,6 +3,7 @@ import { Avatar, Divider, Menu, Typography } from 'antd'
 import { LogoutOutlined, ProfileOutlined, UserOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/store/use-auth-store'
 import { logoutApi } from '@/services/auth.service'
+import { resolveImageUrl } from '@/utils/image-url'
 
 export default function AccountLayout() {
   const location = useLocation()
@@ -58,7 +59,7 @@ export default function AccountLayout() {
           <Avatar
             size={80}
             icon={<UserOutlined />}
-            src={user?.avatar}
+            src={resolveImageUrl(user?.avatar)}
             style={{ backgroundColor: '#1677ff', fontSize: 36 }}
           />
           <Typography.Text

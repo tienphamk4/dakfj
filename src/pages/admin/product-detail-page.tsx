@@ -16,6 +16,7 @@ import {
 import { uploadMultiple } from '@/services/upload.service'
 import type { ProductDetailResponse } from '@/types'
 import FilterBox from '@/components/admin/filter-box'
+import { resolveImageUrl } from '@/utils/image-url'
 
 interface ProductDetailForm {
   name: string
@@ -47,20 +48,6 @@ const fileToBase64 = (file: File) =>
     reader.onload = () => resolve(reader.result as string)
     reader.onerror = error => reject(error)
   })
-
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:8080'
-
-const resolveImageSrc = (img: string) => {
-  if (!img) return ''
-  if (/^https?:\/\//i.test(img)) return img
-  if (img.startsWith('/')) return `${API_BASE_URL}${img}`
-  return `${API_BASE_URL}/images/${img}`
-}
-
-const resolveImageFallback = (img: string) => {
-  if (!img || /^https?:\/\//i.test(img) || img.startsWith('/')) return undefined
-  return `${API_BASE_URL}/api/upload/files/${img}`
-}
 
 const getImageFileName = (img: string) => {
   const cleaned = img.split('?')[0].split('#')[0]
@@ -169,9 +156,9 @@ export default function ProductDetailPage() {
             uid: `existing-${index}-${img}`,
             name: getImageFileName(img),
             status: 'done',
-            url: resolveImageSrc(img),
+            url: resolveImageUrl(img),
             originalImage: img,
-            imageUrl: resolveImageSrc(img),
+            imageUrl: resolveImageUrl(img),
           })),
         )
         form.setFieldsValue({
@@ -257,11 +244,11 @@ export default function ProductDetailPage() {
     }
 
     if (!src && file.originalImage) {
-      src = resolveImageSrc(file.originalImage)
+      src = resolveImageUrl(file.originalImage) ?? ''
     }
 
     setPreviewSrc(src)
-    setPreviewFallback(file.originalImage ? resolveImageFallback(file.originalImage) : undefined)
+    setPreviewFallback(undefined)
     setPreviewOpen(true)
   }
 
@@ -424,8 +411,7 @@ export default function ProductDetailPage() {
                   {detailItem.images.map((img, i) => (
                     <Image
                       key={i}
-                      src={resolveImageSrc(img)}
-                      fallback={resolveImageFallback(img)}
+                      src={resolveImageUrl(img)}
                       width={80}
                       height={80}
                       style={{ objectFit: 'cover', borderRadius: 4 }}

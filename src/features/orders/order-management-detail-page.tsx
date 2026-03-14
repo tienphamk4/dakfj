@@ -7,6 +7,7 @@ import dayjs from 'dayjs'
 import { getEmployeeOrderDetail, updateEmployeeOrderStatus } from '@/services/employee.service'
 import { getProductDetailById } from '@/services/product.service'
 import type { ProductDetailResponse } from '@/types'
+import { resolveImageUrl } from '@/utils/image-url'
 
 const STATUS_LABELS: Record<number, { label: string; color: string }> = {
   0: { label: 'Chờ xác nhận', color: 'gold' },
@@ -28,19 +29,6 @@ const ORDER_TYPE_LABELS: Record<number, string> = {
 }
 
 const TERMINAL_STATUSES = [3, 4, 5]
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:8080'
-
-const resolveImageSrc = (img: string) => {
-  if (!img) return ''
-  if (/^https?:\/\//i.test(img)) return img
-  if (img.startsWith('/')) return `${API_BASE_URL}${img}`
-  return `${API_BASE_URL}/api/upload/files/${img}`
-}
-
-const resolveImageFallback = (img: string) => {
-  if (!img || /^https?:\/\//i.test(img) || img.startsWith('/')) return undefined
-  return `${API_BASE_URL}/images/${img}`
-}
 
 interface OrderManagementDetailPageProps {
   rolePath: 'admin' | 'employee'
@@ -236,8 +224,7 @@ export default function OrderManagementDetailPage({ rolePath }: OrderManagementD
                   {productDetail.images.map((img, idx) => (
                     <Image
                       key={idx}
-                      src={resolveImageSrc(img)}
-                      fallback={resolveImageFallback(img)}
+                      src={resolveImageUrl(img)}
                       width={80}
                       height={80}
                       style={{ objectFit: 'cover', borderRadius: 4 }}

@@ -5,8 +5,7 @@ import { DeleteOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getCart, removeFromCart, updateCartItem, clearCart } from '@/services/cart.service'
 import type { CartItem } from '@/types'
-
-const IMAGE_BASE = 'http://localhost:8080/api/upload/files/'
+import { resolveImageUrl } from '@/utils/image-url'
 
 export default function CartPage() {
   const navigate = useNavigate()
@@ -63,9 +62,9 @@ export default function CartPage() {
       key: 'product',
       render: (_: unknown, record: CartItem) => (
         <Space>
-          {record.productDetail.images?.[0] && (
+          {resolveImageUrl(record.productDetail.images?.[0]) && (
             <img
-              src={`${IMAGE_BASE}${record.productDetail.images[0]}`}
+              src={resolveImageUrl(record.productDetail.images?.[0])}
               alt={record.productDetail.name}
               style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 4 }}
             />
