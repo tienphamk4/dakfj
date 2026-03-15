@@ -10,6 +10,8 @@ import EmployeeLayout from '@/layouts/EmployeeLayout'
 import AccountLayout from '@/layouts/AccountLayout'
 
 const HomePage = lazy(() => import('@/pages/home-page'))
+const ProductsPage = lazy(() => import('@/pages/products-page'))
+const UserProductDetailPage = lazy(() => import('@/pages/product-detail-page'))
 const LoginPage = lazy(() => import('@/pages/login-page'))
 const RegisterPage = lazy(() => import('@/pages/register-page'))
 const CartPage = lazy(() => import('@/pages/cart-page'))
@@ -49,9 +51,13 @@ export const router = createBrowserRouter([
     element: <UserLayout />,
     children: [
       { path: '/', element: wrap(<HomePage />) },
+      { path: '/products', element: wrap(<ProductsPage />) },
+      { path: '/products/:id', element: wrap(<UserProductDetailPage />) },
       { path: '/login', element: wrap(<LoginPage />) },
       { path: '/register', element: wrap(<RegisterPage />) },
       { path: '/order/result', element: wrap(<OrderResultPage />) },
+      { path: '/order/success', element: wrap(<OrderResultPage />) },
+      { path: '/order/error', element: wrap(<OrderResultPage />) },
       {
         element: <PrivateRoute />,
         children: [

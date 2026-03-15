@@ -45,8 +45,8 @@ export default function ProductCard({ product, onAddToCart, loading }: Props) {
               {product.salePrice?.toLocaleString('vi-VN')}₫
             </Typography.Text>
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-              {product.color && <Tag color="blue">{product.color}</Tag>}
-              {product.size && <Tag color="green">{product.size}</Tag>}
+              {product.colorName && <Tag color="blue">{product.colorName}</Tag>}
+              {product.sizeName && <Tag color="green">{product.sizeName}</Tag>}
             </div>
           </div>
         }

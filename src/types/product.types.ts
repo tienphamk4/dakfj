@@ -27,3 +27,58 @@ export interface ProductDetailResponse {
   images: string[]
   deleteFlag?: boolean
 }
+
+export interface SaleProductResponse {
+  id: string
+  ten: string
+  gia: number | null
+  tong: number
+  anh: string | null
+}
+
+export interface ProductCatalogResponse {
+  id: string
+  ten?: string
+  name?: string
+  gia?: number | null
+  salePrice?: number | null
+  anh?: string | null
+  images?: string[] | null
+  danhMucCon?: string | null
+  category?: string | null
+  brandId?: string | null
+  brand?: string | null
+  marterialId?: string | null
+  marterial?: string | null
+}
+
+export interface ProductCatalogDetailItem {
+  id: string
+  name: string
+  description: string
+  quantity: number
+  costPrice: number
+  salePrice: number
+  deleteFlag: boolean
+  productId: string
+  productName: string
+  sizeId: string
+  sizeName: string
+  colorId: string
+  colorName: string
+  images: string[]
+}
+
+export interface ProductCatalogDetailResponse {
+  id: string
+  name: string
+  image: string
+  status: string
+  marterialId: string
+  marterial: string
+  brandId: string
+  brand: string
+  createdAt: string
+  updatedAt: string
+  detailList: ProductCatalogDetailItem[]
+}

@@ -1,5 +1,12 @@
 import { axiosInstance } from './axios-instance'
-import type { ApiResponse, ProductDetailResponse, ProductResponse } from '@/types'
+import type {
+  ApiResponse,
+  ProductCatalogDetailResponse,
+  ProductCatalogResponse,
+  ProductDetailResponse,
+  ProductResponse,
+  SaleProductResponse,
+} from '@/types'
 
 // ── Product (san-pham) ────────────────────────────────────────────────────────
 export const getProducts = () =>
@@ -40,17 +47,13 @@ export interface CreateProductDetailBody {
   sizeId: string
   colorId: string
   images: string[]
-}
-
-export interface UpdateProductDetailBody extends CreateProductDetailBody {
-  id: string
   imagesDelete?: string[]
 }
 
 export const createProductDetail = (body: CreateProductDetailBody) =>
   axiosInstance.post<ApiResponse<ProductDetailResponse>>('/api/admin/product-detail', body)
 
-export const updateProductDetail = (body: UpdateProductDetailBody) =>
+export const updateProductDetail = (body: CreateProductDetailBody & { id: string }) =>
   axiosInstance.put<ApiResponse<ProductDetailResponse>>('/api/admin/product-detail', body)
 
 export const deleteProductDetail = (id: string) =>
@@ -71,3 +74,12 @@ export const searchProductDetails = (params: SearchProductDetailParams) =>
 // ── Homepage (public) ────────────────────────────────────────────────────────
 export const getHomepageProducts = () =>
   axiosInstance.get<ApiResponse<ProductDetailResponse[]>>('/')
+
+export const getSaleProducts = () =>
+  axiosInstance.get<ApiResponse<SaleProductResponse[]>>('/sale')
+
+export const getCatalogProducts = () =>
+  axiosInstance.get<ApiResponse<ProductCatalogResponse[]>>('/product')
+
+export const getCatalogProductById = (id: string) =>
+  axiosInstance.get<ApiResponse<ProductCatalogDetailResponse>>(`/product/${id}`)

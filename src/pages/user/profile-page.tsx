@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { App, Avatar, Button, Card, Divider, Form, Input, Space, Typography, Upload } from 'antd'
-import { UploadOutlined, UserOutlined } from '@ant-design/icons'
+import { App, Button, Card, Divider, Form, Input, Space, Typography, Upload } from 'antd'
+import { UploadOutlined } from '@ant-design/icons'
 import type { UploadFile } from 'antd'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { getUserProfile, updateUserProfile, changePassword } from '@/services/user-profile.service'

@@ -17,11 +17,11 @@ const queryClient = new QueryClient({
 
 function AppInner() {
   const [booting, setBooting] = useState(true)
-  const { setAuth, clearAuth, getAccessToken } = useAuthStore()
+  const { setAuth, clearAuth, getAccessToken, setAccessToken } = useAuthStore()
 
   useEffect(() => {
     // Bind axios callbacks to avoid circular imports
-    bindAuthCallbacks({ getAccessToken, clearAuth })
+    bindAuthCallbacks({ getAccessToken, setAccessToken, clearAuth })
 
     // Restore session from refreshToken stored in localStorage
     const stored = localStorage.getItem('refreshToken')

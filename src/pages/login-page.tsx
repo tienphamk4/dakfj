@@ -4,6 +4,7 @@ import { LockOutlined, MailOutlined } from '@ant-design/icons'
 import { useMutation } from '@tanstack/react-query'
 import { loginApi } from '@/services/auth.service'
 import { useAuthStore } from '@/store/use-auth-store'
+import './auth-page.css'
 
 interface LoginForm {
   email: string
@@ -37,21 +38,21 @@ export default function LoginPage() {
   })
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 60 }}>
-      <Card title="Đăng nhập" style={{ width: 400 }}>
-        <Form<LoginForm> layout="vertical" onFinish={mutate}>
+    <div className="auth-page">
+      <Card title="Đăng nhập" className="auth-card">
+        <Form<LoginForm> layout="vertical" onFinish={mutate} className="auth-form">
           <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email', message: 'Email không hợp lệ' }]}>
             <Input prefix={<MailOutlined />} placeholder="Email" />
           </Form.Item>
           <Form.Item name="password" label="Mật khẩu" rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }]}>
             <Input.Password prefix={<LockOutlined />} placeholder="Mật khẩu" />
           </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" loading={isPending} block>
+          <Form.Item className="auth-form-submit">
+            <Button type="primary" htmlType="submit" loading={isPending} block className="auth-submit-btn">
               Đăng nhập
             </Button>
           </Form.Item>
-          <div style={{ textAlign: 'center' }}>
+          <div className="auth-switch">
             Chưa có tài khoản? <Link to="/register">Đăng ký</Link>
           </div>
         </Form>

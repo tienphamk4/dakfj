@@ -3,6 +3,7 @@ import { App, Button, Card, Form, Input } from 'antd'
 import { LockOutlined, MailOutlined, PhoneOutlined, UserOutlined } from '@ant-design/icons'
 import { useMutation } from '@tanstack/react-query'
 import { registerApi } from '@/services/auth.service'
+import './auth-page.css'
 
 interface RegisterForm {
   name: string
@@ -28,9 +29,9 @@ export default function RegisterPage() {
   })
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 60 }}>
-      <Card title="Đăng ký tài khoản" style={{ width: 440 }}>
-        <Form<RegisterForm> layout="vertical" onFinish={mutate}>
+    <div className="auth-page">
+      <Card title="Đăng ký tài khoản" className="auth-card auth-card-register">
+        <Form<RegisterForm> layout="vertical" onFinish={mutate} className="auth-form">
           <Form.Item name="name" label="Họ tên" rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}>
             <Input prefix={<UserOutlined />} placeholder="Họ tên" />
           </Form.Item>
@@ -46,12 +47,12 @@ export default function RegisterPage() {
           <Form.Item name="address" label="Địa chỉ" rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}>
             <Input placeholder="Địa chỉ" />
           </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" loading={isPending} block>
+          <Form.Item className="auth-form-submit">
+            <Button type="primary" htmlType="submit" loading={isPending} block className="auth-submit-btn">
               Đăng ký
             </Button>
           </Form.Item>
-          <div style={{ textAlign: 'center' }}>
+          <div className="auth-switch">
             Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
           </div>
         </Form>

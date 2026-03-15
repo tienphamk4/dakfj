@@ -19,6 +19,7 @@ import { getCart } from '@/services/cart.service'
 import { checkVoucher, placeOrder } from '@/services/order.service'
 import type { CartItem, OrderRequest, OrderResponse, PaymentMethod, VNPayResponse, VoucherCheckResponse } from '@/types'
 import { resolveImageUrl } from '@/utils/image-url'
+import './order-confirm-page.css'
 const SHIPPING_FEE = 30_000
 
 interface OrderForm {
@@ -73,7 +74,7 @@ export default function OrderConfirmPage() {
         window.location.href = vnpay.paymentUrl
       } else {
         const order = res.data.data as OrderResponse
-        navigate('/order/result', { state: { order, paymentMethod: 'COD' } })
+        navigate('/order/success', { state: { order, paymentMethod: 'COD' } })
       }
     },
     onError: (err: unknown) => {
@@ -88,7 +89,11 @@ export default function OrderConfirmPage() {
   }
 
   if (isLoading) {
-    return <div style={{ textAlign: 'center', paddingTop: 60 }}><Spin size="large" /></div>
+    return (
+      <div className="oc-loading">
+        <Spin size="large" />
+      </div>
+    )
   }
 
   const handleFinish = (values: OrderForm) => {
@@ -111,17 +116,17 @@ export default function OrderConfirmPage() {
       title: 'Sản phẩm',
       key: 'product',
       render: (_: unknown, record: CartItem) => (
-        <Space>
+        <Space className="oc-product-cell">
           {resolveImageUrl(record.productDetail.images?.[0]) && (
             <img
               src={resolveImageUrl(record.productDetail.images?.[0])}
               alt={record.productDetail.name}
-              style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4 }}
+              className="oc-product-image"
             />
           )}
           <div>
-            <div>{record.productDetail.productName}</div>
-            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+            <div className="oc-product-name">{record.productDetail.productName}</div>
+            <Typography.Text type="secondary" className="oc-product-variant">
               {record.productDetail.colorName} / {record.productDetail.sizeName}
             </Typography.Text>
           </div>
@@ -154,13 +159,14 @@ export default function OrderConfirmPage() {
   ]
 
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto' }}>
-      <Typography.Title level={3}>Xác nhận đơn hàng</Typography.Title>
+    <div className="oc-page">
+      <Typography.Title level={3} className="oc-title">Xác nhận đơn hàng</Typography.Title>
 
       {/* Item list */}
-      <Card style={{ marginBottom: 16 }}>
-        <Typography.Title level={5} style={{ marginBottom: 12 }}>Sản phẩm đặt mua</Typography.Title>
+      <Card className="oc-card oc-items-card">
+        <Typography.Title level={5} className="oc-section-title">Sản phẩm đặt mua</Typography.Title>
         <Table
+          className="oc-table"
           dataSource={selectedItems}
           columns={columns}
           rowKey={i => i.id}
@@ -170,8 +176,9 @@ export default function OrderConfirmPage() {
       </Card>
 
       {/* Order form */}
-      <Card>
+      <Card className="oc-card oc-form-card">
         <Form<OrderForm>
+          className="oc-form"
           layout="vertical"
           initialValues={{ paymentMethod: 'COD' }}
           onFinish={handleFinish}
@@ -193,6 +200,7 @@ export default function OrderConfirmPage() {
           {/* Voucher */}
           <Form.Item label="Mã giảm giá">
             <Input.Search
+              className="oc-voucher-input"
               value={voucherCode}
               onChange={e => {
                 setVoucherCode(e.target.value)
@@ -210,7 +218,7 @@ export default function OrderConfirmPage() {
               }}
             />
             {voucherResult && (
-              <Typography.Text type="success" style={{ fontSize: 12 }}>
+              <Typography.Text type="success" className="oc-voucher-success">
                 {voucherResult.ten} — Giảm {voucherResult.discountAmount.toLocaleString('vi-VN')}₫
               </Typography.Text>
             )}
@@ -229,7 +237,7 @@ export default function OrderConfirmPage() {
           <Divider />
 
           {/* Price breakdown */}
-          <Descriptions bordered size="small" column={1} style={{ marginBottom: 16 }}>
+          <Descriptions bordered size="small" column={1} className="oc-summary">
             <Descriptions.Item label="Tổng tiền hàng">
               {subTotal.toLocaleString('vi-VN')}₫
             </Descriptions.Item>
@@ -240,7 +248,7 @@ export default function OrderConfirmPage() {
               {SHIPPING_FEE.toLocaleString('vi-VN')}₫
             </Descriptions.Item>
             <Descriptions.Item label={<strong>Tổng thanh toán</strong>}>
-              <Typography.Text type="danger" strong style={{ fontSize: 16 }}>
+              <Typography.Text type="danger" strong className="oc-total">
                 {total.toLocaleString('vi-VN')}₫
               </Typography.Text>
             </Descriptions.Item>
@@ -253,6 +261,7 @@ export default function OrderConfirmPage() {
               loading={orderMutation.isPending}
               size="large"
               block
+              className="oc-submit-btn"
             >
               Xác nhận đặt hàng
             </Button>

@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getCart, removeFromCart, updateCartItem, clearCart } from '@/services/cart.service'
 import type { CartItem } from '@/types'
 import { resolveImageUrl } from '@/utils/image-url'
+import './cart-page.css'
 
 export default function CartPage() {
   const navigate = useNavigate()
@@ -61,17 +62,17 @@ export default function CartPage() {
       title: 'Sản phẩm',
       key: 'product',
       render: (_: unknown, record: CartItem) => (
-        <Space>
+        <Space className="cart-product-cell">
           {resolveImageUrl(record.productDetail.images?.[0]) && (
             <img
               src={resolveImageUrl(record.productDetail.images?.[0])}
               alt={record.productDetail.name}
-              style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 4 }}
+              className="cart-product-image"
             />
           )}
           <div>
-            <div>{record.productDetail.productName}</div>
-            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+            <div className="cart-product-name">{record.productDetail.productName}</div>
+            <Typography.Text type="secondary" className="cart-product-variant">
               {record.productDetail.colorName} / {record.productDetail.sizeName}
             </Typography.Text>
           </div>
@@ -91,6 +92,7 @@ export default function CartPage() {
       align: 'center' as const,
       render: (_: unknown, record: CartItem) => (
         <InputNumber
+          className="cart-qty-input"
           min={1}
           max={record.productDetail.quantity}
           value={record.quantity}
@@ -100,7 +102,6 @@ export default function CartPage() {
               updateMutation.mutate({ cartDetailId: record.id, quantity: val })
             }
           }}
-          style={{ width: 72 }}
         />
       ),
     },
@@ -109,7 +110,7 @@ export default function CartPage() {
       key: 'totalPrice',
       align: 'right' as const,
       render: (_: unknown, record: CartItem) => (
-        <Typography.Text type="danger" strong>
+        <Typography.Text type="danger" strong className="cart-line-total">
           {record.totalPrice.toLocaleString('vi-VN')}₫
         </Typography.Text>
       ),
@@ -120,6 +121,7 @@ export default function CartPage() {
       render: (_: unknown, record: CartItem) => (
         <Popconfirm title="Xóa sản phẩm này?" onConfirm={() => removeMutation.mutate(record.id)}>
           <Button
+            className="cart-remove-btn"
             size="small"
             danger
             icon={<DeleteOutlined />}
@@ -131,28 +133,37 @@ export default function CartPage() {
   ]
 
   if (isLoading) {
-    return <div style={{ textAlign: 'center', paddingTop: 60 }}><Spin size="large" /></div>
+    return (
+      <div className="cart-loading">
+        <Spin size="large" />
+      </div>
+    )
   }
 
   if (items.length === 0) {
-    return <Empty description={<>Giỏ hàng trống. <Link to="/">Mua sắm ngay</Link></>} style={{ paddingTop: 60 }} />
+    return (
+      <div className="cart-empty">
+        <Empty description={<>Giỏ hàng trống. <Link to="/">Mua sắm ngay</Link></>} />
+      </div>
+    )
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Typography.Title level={3} style={{ margin: 0 }}>Giỏ hàng</Typography.Title>
+    <div className="cart-page">
+      <div className="cart-header">
+        <Typography.Title level={3} className="cart-title">Giỏ hàng</Typography.Title>
         <Popconfirm
           title="Xóa toàn bộ giỏ hàng?"
           onConfirm={() => clearMutation.mutate()}
           okText="Xóa"
           cancelText="Hủy"
         >
-          <Button danger loading={clearMutation.isPending}>Xóa tất cả</Button>
+          <Button danger loading={clearMutation.isPending} className="cart-clear-btn">Xóa tất cả</Button>
         </Popconfirm>
       </div>
 
       <Table
+        className="cart-table"
         dataSource={items}
         columns={columns}
         rowKey={record => record.id}
@@ -162,10 +173,12 @@ export default function CartPage() {
           <Table.Summary>
             <Table.Summary.Row>
               <Table.Summary.Cell index={0} colSpan={3} align="right">
-                <Typography.Text strong>Tạm tính ({selectedIds.length} sản phẩm):</Typography.Text>
+                <Typography.Text strong className="cart-summary-label">
+                  Tạm tính ({selectedIds.length} sản phẩm):
+                </Typography.Text>
               </Table.Summary.Cell>
               <Table.Summary.Cell index={1} align="right">
-                <Typography.Text type="danger" strong style={{ fontSize: 16 }}>
+                <Typography.Text type="danger" strong className="cart-summary-price">
                   {selectedSubTotal.toLocaleString('vi-VN')}₫
                 </Typography.Text>
               </Table.Summary.Cell>
@@ -175,8 +188,9 @@ export default function CartPage() {
         )}
       />
 
-      <div style={{ marginTop: 16, textAlign: 'right' }}>
+      <div className="cart-actions">
         <Button
+          className="cart-checkout-btn"
           type="primary"
           size="large"
           disabled={selectedIds.length === 0}

@@ -1,58 +1,96 @@
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { Button, Descriptions, Result } from 'antd'
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Button, Result } from 'antd'
 import type { OrderResponse } from '@/types'
+import './order-result-page.css'
 
 export default function OrderResultPage() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const location = useLocation()
+  const isSuccessRoute = location.pathname === '/order/success'
+  const isErrorRoute = location.pathname === '/order/error'
+  const isLegacyResultRoute = location.pathname === '/order/result'
 
   const stateOrder = location.state?.order as OrderResponse | undefined
   const statePaymentMethod = location.state?.paymentMethod as string | undefined
 
-  // COD success path — arrived via navigate from order-confirm-page
-  if (statePaymentMethod === 'COD' && stateOrder) {
+  if (isLegacyResultRoute) {
+    if (statePaymentMethod === 'COD') {
+      return (
+        <Navigate
+          to="/order/success"
+          replace
+          state={{ order: stateOrder, paymentMethod: 'COD' }}
+        />
+      )
+    }
+
+    const responseCode = params.get('vnp_ResponseCode')
+    return <Navigate to={responseCode === '00' ? '/order/success' : '/order/error'} replace />
+  }
+
+  if (isSuccessRoute) {
     return (
-      <Result
-        status="success"
-        title="Đặt hàng thành công!"
-        subTitle={`Mã đơn hàng: ${stateOrder.code} — Cảm ơn bạn đã mua hàng!`}
-        extra={[
-          <Button type="primary" key="home" onClick={() => navigate('/')}>
-            Về trang chủ
-          </Button>,
-        ]}
-      >
-        <Descriptions bordered size="small" column={1} style={{ maxWidth: 400, margin: '0 auto' }}>
-          <Descriptions.Item label="Mã đơn">{stateOrder.code}</Descriptions.Item>
-          <Descriptions.Item label="Tổng thanh toán">
-            {stateOrder.total.toLocaleString('vi-VN')}₫
-          </Descriptions.Item>
-          <Descriptions.Item label="Hình thức">Thanh toán khi nhận hàng</Descriptions.Item>
-        </Descriptions>
-      </Result>
+      <div className="orp-page">
+        <Result
+          className=""
+          status="success"
+          title="Đặt hàng thành công!"
+          subTitle={
+            stateOrder
+              ? `Cảm ơn bạn đã mua hàng!`
+              : 'Đơn hàng đã được ghi nhận thành công. Cảm ơn bạn đã mua hàng!'
+          }
+          extra={[
+            <Button className="orp-home-btn" type="primary" key="home" onClick={() => navigate('/')}>
+              Về trang chủ
+            </Button>,
+          ]}
+        >
+          {/* <Descriptions bordered size="small" column={1} className="orp-descriptions">
+            <Descriptions.Item label="Mã đơn">{stateOrder.code}</Descriptions.Item>
+            <Descriptions.Item label="Tổng thanh toán">
+              {stateOrder.total.toLocaleString('vi-VN')}₫
+            </Descriptions.Item>
+            <Descriptions.Item label="Hình thức">Thanh toán khi nhận hàng</Descriptions.Item>
+          </Descriptions> */}
+        </Result>
+      </div>
     )
   }
 
-  // VNPAY callback path — arrived via redirect from VNPAY gateway
-  const responseCode = params.get('vnp_ResponseCode')
-  const success = responseCode === '00'
+  if (isErrorRoute) {
+    return (
+      <div className="orp-page">
+        <Result
+          className=""
+          status="error"
+          title="Thanh toán thất bại"
+          subTitle="Giao dịch không thành công hoặc bị hủy. Vui lòng thử lại."
+          extra={[
+            <Button className="orp-home-btn" type="primary" key="home" onClick={() => navigate('/')}>
+              Về trang chủ
+            </Button>,
+          ]}
+        />
+      </div>
+    )
+  }
 
   return (
-    <Result
-      status={success ? 'success' : 'error'}
-      title={success ? 'Thanh toán thành công!' : 'Thanh toán thất bại'}
-      subTitle={
-        success
-          ? 'Đơn hàng của bạn đã được thanh toán. Cảm ơn bạn đã mua hàng!'
-          : 'Giao dịch không thành công hoặc bị hủy. Vui lòng thử lại.'
-      }
-      extra={[
-        <Button type="primary" key="home" onClick={() => navigate('/')}>
-          Về trang chủ
-        </Button>,
-      ]}
-    />
+    <div className="orp-page">
+      <Result
+        className=""
+        status="error"
+        title="Không tìm thấy kết quả đơn hàng"
+        subTitle="Đường dẫn không hợp lệ. Vui lòng quay lại trang chủ hoặc thử đặt hàng lại."
+        extra={[
+          <Button className="orp-home-btn" type="primary" key="home" onClick={() => navigate('/')}>
+            Về trang chủ
+          </Button>,
+        ]}
+      />
+    </div>
   )
 }
 

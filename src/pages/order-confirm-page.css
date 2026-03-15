@@ -1,0 +1,160 @@
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&family=Lato:wght@400;500;700&display=swap');
+
+.oc-page {
+  --oc-primary: #72aec8;
+  --oc-dark: #212529;
+  --oc-muted: #6f7c85;
+  --oc-border: #d7e0e6;
+  --oc-surface: #ffffff;
+  --oc-danger: #dc4f4f;
+  width: min(980px, 100%);
+  margin: 0 auto;
+  font-family: 'Lato', sans-serif;
+}
+
+.oc-loading {
+  text-align: center;
+  padding-top: 60px;
+}
+
+.oc-title.ant-typography {
+  margin-bottom: 14px;
+  font-family: 'Jost', sans-serif;
+  font-size: clamp(26px, 4vw, 34px);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--oc-dark);
+}
+
+.oc-card.ant-card {
+  border-radius: 18px;
+  border: 1px solid var(--oc-border);
+  box-shadow: 0 10px 26px rgba(23, 33, 40, 0.08);
+}
+
+.oc-items-card.ant-card {
+  margin-bottom: 16px;
+}
+
+.oc-section-title.ant-typography {
+  margin-bottom: 12px;
+  font-family: 'Jost', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.oc-table .ant-table {
+  border: 1px solid #e4ecf0;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.oc-table .ant-table-thead > tr > th {
+  background: #f5fafc;
+  color: #56636b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: 'Jost', sans-serif;
+  font-size: 12px;
+  border-bottom: 1px solid var(--oc-border);
+}
+
+.oc-product-cell {
+  gap: 10px;
+}
+
+.oc-product-image {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e6edf1;
+  background: #f3f7f9;
+}
+
+.oc-product-name {
+  font-weight: 600;
+  color: var(--oc-dark);
+}
+
+.oc-product-variant.ant-typography {
+  font-size: 12px;
+  color: var(--oc-muted);
+}
+
+.oc-form .ant-form-item-label > label {
+  color: #4d5860;
+  font-weight: 500;
+}
+
+.oc-form .ant-input,
+.oc-form .ant-input-affix-wrapper,
+.oc-form .ant-input-number,
+.oc-form .ant-select-selector,
+.oc-form .ant-input-textarea textarea {
+  border-radius: 12px;
+  border-color: var(--oc-border);
+}
+
+.oc-form .ant-input,
+.oc-form .ant-input-affix-wrapper,
+.oc-form .ant-input-number,
+.oc-form .ant-select-selector {
+  min-height: 42px;
+}
+
+.oc-voucher-input .ant-input,
+.oc-voucher-input .ant-input-group-addon .ant-btn {
+  min-height: 42px;
+}
+
+.oc-voucher-input .ant-input-group-addon .ant-btn {
+  border-radius: 0 12px 12px 0;
+  background: var(--oc-dark);
+  border-color: var(--oc-dark);
+}
+
+.oc-voucher-input .ant-input {
+  border-radius: 12px 0 0 12px;
+}
+
+.oc-voucher-success.ant-typography {
+  font-size: 12px;
+}
+
+.oc-summary {
+  margin-bottom: 16px;
+}
+
+.oc-summary .ant-descriptions-view {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.oc-total.ant-typography {
+  font-size: 18px;
+  color: var(--oc-danger);
+}
+
+.oc-submit-btn.ant-btn.ant-btn-primary {
+  min-height: 46px;
+  border-radius: 12px;
+  border: none;
+  background: var(--oc-dark);
+  font-family: 'Jost', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  box-shadow: 0 10px 20px rgba(26, 34, 40, 0.22);
+}
+
+.oc-submit-btn.ant-btn.ant-btn-primary:hover,
+.oc-submit-btn.ant-btn.ant-btn-primary:focus {
+  background: var(--oc-primary);
+}
+
+@media (max-width: 860px) {
+  .oc-page {
+    width: 100%;
+  }
+}

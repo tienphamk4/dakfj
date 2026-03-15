@@ -1,0 +1,51 @@
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&family=Lato:wght@400;500;700&display=swap');
+
+.orp-page {
+  --orp-primary: #72aec8;
+  --orp-dark: #212529;
+  --orp-border: #d7e0e6;
+  --orp-surface: #ffffff;
+  width: 100%;
+  font-family: 'Lato', sans-serif;
+}
+
+.orp-result.ant-result {
+  background: var(--orp-surface);
+  border: 1px solid var(--orp-border);
+  border-radius: 18px;
+  box-shadow: 0 12px 28px rgba(23, 33, 40, 0.08);
+  padding: clamp(20px, 4vw, 38px);
+}
+
+.orp-result .ant-result-title {
+  font-family: 'Jost', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.orp-home-btn.ant-btn.ant-btn-primary {
+  min-height: 44px;
+  border-radius: 12px;
+  border: none;
+  background: var(--orp-dark);
+  font-family: 'Jost', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  box-shadow: 0 10px 20px rgba(26, 34, 40, 0.22);
+}
+
+.orp-home-btn.ant-btn.ant-btn-primary:hover,
+.orp-home-btn.ant-btn.ant-btn-primary:focus {
+  background: var(--orp-primary);
+}
+
+.orp-descriptions {
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+.orp-descriptions .ant-descriptions-view {
+  border-radius: 12px;
+  overflow: hidden;
+}

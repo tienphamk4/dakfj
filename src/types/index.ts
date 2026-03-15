@@ -14,7 +14,14 @@ export type {
   NotificationMessage,
 } from './api.types'
 export type { Brand, Color, Material, Size } from './catalog.types'
-export type { ProductResponse, ProductDetailResponse } from './product.types'
+export type {
+  ProductResponse,
+  ProductDetailResponse,
+  SaleProductResponse,
+  ProductCatalogResponse,
+  ProductCatalogDetailItem,
+  ProductCatalogDetailResponse,
+} from './product.types'
 export type {
   CartItem,
   PaymentMethod,
