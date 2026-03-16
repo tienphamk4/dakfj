@@ -40,9 +40,7 @@ export default function ProductDetailPage() {
 
   const addToCartMutation = useMutation({
     mutationFn: async ({ productDetailId, quantity }: { productDetailId: string; quantity: number }) => {
-      await Promise.all(
-        Array.from({ length: quantity }, () => addToCart(productDetailId)),
-      )
+      await addToCart(productDetailId, quantity)
     },
   })
 

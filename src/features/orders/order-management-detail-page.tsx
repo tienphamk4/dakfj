@@ -29,6 +29,11 @@ const ORDER_TYPE_LABELS: Record<number, string> = {
 }
 
 const TERMINAL_STATUSES = [3, 4, 5]
+const STATUS_TRANSITIONS: Record<number, number[]> = {
+  0: [1, 3],
+  1: [2, 3],
+  2: [5, 3],
+}
 
 interface OrderManagementDetailPageProps {
   rolePath: 'admin' | 'employee'
@@ -66,6 +71,15 @@ export default function OrderManagementDetailPage({ rolePath }: OrderManagementD
     ? (PAYMENT_STATUS_LABELS[order.paymentStatus] ?? { label: String(order.paymentStatus), color: 'default' })
     : null
   const isTerminal = order ? TERMINAL_STATUSES.includes(order.status) : false
+  const availableStatusOptions = order
+    ? [
+        { value: order.status, label: `${STATUS_LABELS[order.status]?.label ?? order.status} (hiện tại)` },
+        ...(STATUS_TRANSITIONS[order.status] ?? []).map(status => ({
+          value: status,
+          label: STATUS_LABELS[status]?.label ?? String(status),
+        })),
+      ]
+    : []
 
   useEffect(() => {
     if (order) {
@@ -162,8 +176,7 @@ export default function OrderManagementDetailPage({ rolePath }: OrderManagementD
                   style={{ width: 180 }}
                   value={nextStatus}
                   loading={statusMutation.isPending || isLoading}
-                  options={Object.entries(STATUS_LABELS)
-                    .map(([k, v]) => ({ value: Number(k), label: v.label }))}
+                  options={availableStatusOptions}
                   onChange={(val: number) => setNextStatus(val)}
                 />
                 <Popconfirm

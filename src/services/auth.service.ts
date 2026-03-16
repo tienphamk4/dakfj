@@ -12,6 +12,9 @@ export const registerApi = (body: {
   address: string
 }) => axiosInstance.post<ApiResponse<UserResponse>>('/api/register', body)
 
+export const checkCustomerApi = (phone: string) =>
+  axiosInstance.get<ApiResponse<boolean>>('/api/check-customer', { params: { phone } })
+
 export const refreshTokenApi = (refreshToken: string) =>
   axiosInstance.post<ApiResponse<string>>('/api/refresh', { refreshToken })
 

@@ -10,7 +10,7 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding-top: clamp(20px, 4vw, 54px);
+  padding-top: clamp(20px, 4vw, 30px);
   font-family: 'Lato', sans-serif;
 }
 
@@ -25,9 +25,7 @@
 .auth-card-register.ant-card {
   width: min(100%, 500px);
 }
-.ant-input{
-    /* height:38px !important; */
-}
+
 .auth-card .ant-card-head {
   min-height: 62px;
   /* background: linear-gradient(180deg, #f8fbfc 0%, #f2f7fa 100%); */
@@ -107,6 +105,45 @@
 
 .auth-switch a:hover {
   color: var(--auth-primary);
+}
+
+.phone-verification-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.phone-verification-title {
+  margin: 0;
+  font-family: 'Jost', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--auth-dark);
+}
+
+.phone-verification-desc {
+  margin: 0;
+  color: var(--auth-muted);
+  line-height: 1.55;
+}
+
+.phone-verification-input.ant-input {
+  min-height: 46px;
+  border-radius: 12px;
+  text-align: center;
+  letter-spacing: 0.32em;
+  font-weight: 600;
+  font-size: 20px;
+}
+
+.phone-verification-hint {
+  font-size: 13px;
+  color: #7d8a93;
+}
+
+.phone-verification-back.ant-btn {
+  align-self: flex-start;
+  padding-left: 0;
 }
 
 @media (max-width: 620px) {
