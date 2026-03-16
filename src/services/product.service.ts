@@ -71,6 +71,9 @@ export const searchProductDetails = (params: SearchProductDetailParams) =>
     params,
   })
 
+export const getProductDetailsByProductId = (productId: string) =>
+  axiosInstance.get<ApiResponse<ProductDetailResponse[]>>(`/api/admin/product-detail/product/${productId}`)
+
 // ── Homepage (public) ────────────────────────────────────────────────────────
 export const getHomepageProducts = () =>
   axiosInstance.get<ApiResponse<ProductDetailResponse[]>>('/')
