@@ -48,9 +48,9 @@ export default function UserLayout() {
 
   const navItems = [
     { href: '/', label: 'Trang chủ' },
-    { href: '/#services', label: 'Dịch vụ' },
     { href: '/products', label: 'Sản phẩm' },
-    { href: '/#promo', label: 'Khuyến mãi' },
+    { href: '/services', label: 'Dịch vụ' },
+    { href: '/promotions', label: 'Khuyến mãi' },
   ]
 
   return (
@@ -121,7 +121,7 @@ export default function UserLayout() {
           <section className="user-footer-block">
             <h4>BeeShop</h4>
             <p>BeeShop © {new Date().getFullYear()} - SD44</p>
-            <p>Nền tảng mua sắm thiết bị công nghệ dành cho khách hàng cá nhân và doanh nghiệp.</p>
+            <p>Nền tảng mua sắm thời trang dành cho khách hàng cá nhân và doanh nghiệp.</p>
           </section>
 
           <section className="user-footer-block">

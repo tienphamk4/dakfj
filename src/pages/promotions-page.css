@@ -1,0 +1,254 @@
+:root {
+  --promo-bg-top: #fff5f5;
+  --promo-bg-bottom: #fff;
+  --promo-border: #f8c9ca;
+  --promo-title: #3b1f25;
+  --promo-text: #6a4b52;
+  --promo-soft: #ffe9ea;
+  --promo-warm: #ff4d4f;
+  --promo-warm-dark: #db3739;
+  --promo-shadow: 0 14px 30px rgba(130, 26, 37, 0.1);
+}
+
+.promotions-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 26px 0 44px;
+  color: var(--promo-title);
+}
+
+.promo-hero {
+  border-radius: 22px;
+  border: 1px solid var(--promo-border);
+  padding: 32px 30px;
+    background: radial-gradient(circle at 92% 12%, rgba(255, 77, 79, 0.3) 0%, rgba(0, 0, 390, 0) 2%), linear-gradient(160deg, var(--promo-bg-top), var(--promo-bg-bottom));
+    box-shadow: var(--promo-shadow);
+}
+
+.promo-hero-kicker {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ba3d46;
+  font-weight: 700;
+}
+
+.promo-hero h1 {
+  margin: 10px 0 10px;
+  font-size: clamp(30px, 4vw, 42px);
+  line-height: 1.1;
+}
+
+.promo-hero > p {
+  max-width: 780px;
+  margin: 0;
+  color: var(--promo-text);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.promo-hero-actions {
+  margin-top: 24px;
+  display: inline-flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.promo-btn {
+  min-height: 42px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.promo-btn-primary {
+  background: var(--promo-warm);
+  color: #fff;
+}
+
+.promo-btn-primary:hover {
+  background: var(--promo-warm-dark);
+  color: #fff;
+}
+
+.promo-btn-ghost {
+  border: 1px solid #f4a9ad;
+  color: #8e3540;
+  background: #fff2f3;
+}
+
+.promo-btn-ghost:hover {
+  border-color: #e06a72;
+  color: #70252e;
+}
+
+.promo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.promo-card {
+  border-radius: 16px;
+  border: 1px solid var(--promo-border);
+  background: #fff;
+  padding: 16px;
+  box-shadow: 0 10px 18px rgba(130, 26, 37, 0.08);
+  transition: transform 0.24s ease, box-shadow 0.24s ease;
+}
+
+.promo-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 24px rgba(130, 26, 37, 0.15);
+}
+
+.promo-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.promo-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--promo-warm-dark);
+  background: var(--promo-soft);
+  font-size: 18px;
+}
+
+.promo-badge {
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #fff0f1;
+  border: 1px solid #ffc9cc;
+  color: #ac2f3a;
+}
+
+.promo-card h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.promo-card h4 {
+  margin: 6px 0;
+  font-size: 15px;
+  color: #9d3e4a;
+}
+
+.promo-card p {
+  margin: 0;
+  color: var(--promo-text);
+  line-height: 1.55;
+}
+
+.promo-bottom-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 16px;
+}
+
+.promo-timeline,
+.promo-commitments {
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid var(--promo-border);
+  padding: 16px;
+}
+
+.promo-timeline h2,
+.promo-commitments h2 {
+  margin: 0 0 12px;
+  font-size: 22px;
+}
+
+.promo-time-item {
+  padding: 12px;
+  border: 1px dashed #f4b9bd;
+  border-radius: 12px;
+  background: #fffafb;
+}
+
+.promo-time-item + .promo-time-item {
+  margin-top: 10px;
+}
+
+.promo-time-item p {
+  margin: 0;
+  color: #ba3d46;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.promo-time-item h3 {
+  margin: 5px 0 4px;
+  font-size: 16px;
+}
+
+.promo-time-item span {
+  color: var(--promo-text);
+  font-size: 14px;
+}
+
+.promo-commit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.promo-commit-item + .promo-commit-item {
+  border-top: 1px solid #f8d7da;
+}
+
+.promo-commit-item span {
+  color: #c03744;
+  font-size: 18px;
+  margin-top: 2px;
+}
+
+.promo-commit-item p {
+  margin: 0;
+  color: var(--promo-text);
+  line-height: 1.5;
+}
+
+@media (max-width: 960px) {
+  .promo-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .promo-bottom-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 580px) {
+  .promotions-page {
+    gap: 16px;
+    padding: 18px 0 30px;
+  }
+
+  .promo-hero {
+    padding: 24px 16px;
+    border-radius: 16px;
+  }
+
+  .promo-card,
+  .promo-timeline,
+  .promo-commitments {
+    border-radius: 14px;
+    padding: 14px;
+  }
+}
