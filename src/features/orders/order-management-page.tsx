@@ -16,7 +16,7 @@ const STATUS_LABELS: Record<number, { label: string; color: string }> = {
   5: { label: 'Hoàn thành', color: 'green' },
 }
 
-const STATUS_ORDER = [0, 1, 2, 5, 4, 3]
+const STATUS_ORDER = [0, 1, 2, 5, 3]
 const ALL_STATUS = 'all'
 type StatusFilterValue = number | typeof ALL_STATUS
 
@@ -25,7 +25,6 @@ const STATUS_BUTTON_STYLES: Record<number, { bg: string; border: string; text: s
   1: { bg: '#e6f4ff', border: '#91caff', text: '#0958d9', activeBg: '#1677ff' },
   2: { bg: '#fff7e6', border: '#ffd591', text: '#d46b08', activeBg: '#fa8c16' },
   5: { bg: '#f6ffed', border: '#b7eb8f', text: '#389e0d', activeBg: '#52c41a' },
-  4: { bg: '#fff2e8', border: '#ffbb96', text: '#d4380d', activeBg: '#fa541c' },
   3: { bg: '#fff1f0', border: '#ffa39e', text: '#cf1322', activeBg: '#f5222d' },
 }
 

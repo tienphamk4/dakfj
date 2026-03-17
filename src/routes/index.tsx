@@ -11,6 +11,8 @@ import AccountLayout from '@/layouts/AccountLayout'
 
 const HomePage = lazy(() => import('@/pages/home-page'))
 const ProductsPage = lazy(() => import('@/pages/products-page'))
+const PromotionsPage = lazy(() => import('@/pages/promotions-page'))
+const ServicesPage = lazy(() => import('@/pages/services-page'))
 const UserProductDetailPage = lazy(() => import('@/pages/product-detail-page'))
 const LoginPage = lazy(() => import('@/pages/login-page'))
 const RegisterPage = lazy(() => import('@/pages/register-page'))
@@ -52,6 +54,8 @@ export const router = createBrowserRouter([
     children: [
       { path: '/', element: wrap(<HomePage />) },
       { path: '/products', element: wrap(<ProductsPage />) },
+      { path: '/promotions', element: wrap(<PromotionsPage />) },
+      { path: '/services', element: wrap(<ServicesPage />) },
       { path: '/products/:id', element: wrap(<UserProductDetailPage />) },
       { path: '/login', element: wrap(<LoginPage />) },
       { path: '/register', element: wrap(<RegisterPage />) },

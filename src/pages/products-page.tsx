@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, Col, Form, Input, Pagination, Row, Select, Spin } from 'antd'
+import { Col, Form, Input, InputNumber, Pagination, Select, Spin } from 'antd'
 import { useQuery } from '@tanstack/react-query'
-import { getCatalogProducts } from '@/services/product.service'
-import { getBrands, getMaterials } from '@/services/catalog.service'
+import FilterBox from '@/components/admin/filter-box'
+import { getHomepageProducts } from '@/services/product.service'
 import { resolveImageUrl } from '@/utils/image-url'
 import './products-page.css'
 
@@ -11,19 +11,28 @@ const fallbackImage = '/template/images/product-item5.jpg'
 
 interface FilterValues {
   name?: string
-  brandId?: string
-  marterialId?: string
+  productName?: string
+  colorName?: string
+  sizeName?: string
+  minPrice?: number
+  maxPrice?: number
+  stockStatus?: 'inStock' | 'outOfStock'
 }
 
 interface ProductListItem {
   id: string
+  productId: string
   name: string
+  description: string
   image: string
-  brandId?: string
-  brand?: string
-  marterialId?: string
-  marterial?: string
+  productName: string
+  colorName: string
+  sizeName: string
+  salePrice: number
+  quantity: number
 }
+
+const formatPrice = (value: number) => `${value.toLocaleString('vi-VN')} VND`
 
 export default function ProductsPage() {
   const navigate = useNavigate()
@@ -33,140 +42,181 @@ export default function ProductsPage() {
   const pageSize = 12
 
   const { data, isLoading } = useQuery({
-    queryKey: ['catalog-products-page'],
-    queryFn: () => getCatalogProducts().then(r => r.data),
+    queryKey: ['catalog-product-details-page'],
+    queryFn: () => getHomepageProducts().then(r => r.data),
   })
 
-  const { data: brandsRes } = useQuery({
-    queryKey: ['brands'],
-    queryFn: () => getBrands().then(r => r.data),
-  })
-
-  const { data: materialsRes } = useQuery({
-    queryKey: ['materials'],
-    queryFn: () => getMaterials().then(r => r.data),
-  })
-
-  const products = data?.data ?? []
-  const brands = brandsRes?.data ?? []
-  const materials = materialsRes?.data ?? []
+  const productDetails = data?.data ?? []
 
   const normalizedProducts: ProductListItem[] = useMemo(() => {
-    return products.map((item, index) => {
-      const name = item.ten || item.name || 'Sản phẩm'
-      const image = resolveImageUrl(item.anh || item.images?.[0]) ?? fallbackImage
+    return productDetails
+      .filter(item => !item.deleteFlag)
+      .map((item, index) => {
+        const name = item.name || item.productName || 'Sản phẩm'
+        const image = resolveImageUrl(item.images?.[0]) ?? fallbackImage
 
-      return {
-        id: item.id || `catalog-${index}`,
-        name,
-        image,
-        brandId: item.brandId ?? undefined,
-        brand: item.brand ?? undefined,
-        marterialId: item.marterialId ?? undefined,
-        marterial: item.marterial ?? undefined,
-      }
-    })
-  }, [products])
+        return {
+          id: item.id || `catalog-detail-${index}`,
+          productId: item.productId || '',
+          name,
+          description: item.description || '',
+          image,
+          productName: item.productName || name,
+          colorName: item.colorName || 'N/A',
+          sizeName: item.sizeName || 'N/A',
+          salePrice: item.salePrice ?? 0,
+          quantity: item.quantity ?? 0,
+        }
+      })
+  }, [productDetails])
+
+  const productNameOptions = useMemo(
+    () => Array.from(new Set(normalizedProducts.map(item => item.productName))).sort(),
+    [normalizedProducts],
+  )
+
+  const colorOptions = useMemo(
+    () => Array.from(new Set(normalizedProducts.map(item => item.colorName))).sort(),
+    [normalizedProducts],
+  )
+
+  const sizeOptions = useMemo(
+    () => Array.from(new Set(normalizedProducts.map(item => item.sizeName))).sort(),
+    [normalizedProducts],
+  )
 
   const filteredProducts = useMemo(() => {
-    const selectedBrand = brands.find(item => item.id === filters.brandId)
-    const selectedMaterial = materials.find(item => item.id === filters.marterialId)
-
     return normalizedProducts.filter((item) => {
-      if (filters.name && !item.name.toLowerCase().includes(filters.name.toLowerCase())) {
+      const keyword = filters.name?.trim().toLowerCase()
+      if (
+        keyword &&
+        !item.name.toLowerCase().includes(keyword) &&
+        !item.productName.toLowerCase().includes(keyword)
+      ) {
         return false
       }
 
-      if (filters.brandId) {
-        if (item.brandId) {
-          if (item.brandId !== filters.brandId) return false
-        } else if (selectedBrand?.name && item.brand) {
-          if (item.brand.toLowerCase() !== selectedBrand.name.toLowerCase()) return false
-        } else {
-          return false
-        }
+      if (filters.productName && item.productName !== filters.productName) {
+        return false
       }
 
-      if (filters.marterialId) {
-        if (item.marterialId) {
-          if (item.marterialId !== filters.marterialId) return false
-        } else if (selectedMaterial?.name && item.marterial) {
-          if (item.marterial.toLowerCase() !== selectedMaterial.name.toLowerCase()) return false
-        } else {
-          return false
-        }
+      if (filters.colorName && item.colorName !== filters.colorName) {
+        return false
+      }
+
+      if (filters.sizeName && item.sizeName !== filters.sizeName) {
+        return false
+      }
+
+      if (typeof filters.minPrice === 'number' && item.salePrice < filters.minPrice) {
+        return false
+      }
+
+      if (typeof filters.maxPrice === 'number' && item.salePrice > filters.maxPrice) {
+        return false
+      }
+
+      if (filters.stockStatus === 'inStock' && item.quantity <= 0) {
+        return false
+      }
+
+      if (filters.stockStatus === 'outOfStock' && item.quantity > 0) {
+        return false
       }
 
       return true
     })
-  }, [normalizedProducts, filters, brands, materials])
+  }, [normalizedProducts, filters])
 
   const pagedProducts = useMemo(() => {
     const start = (currentPage - 1) * pageSize
     return filteredProducts.slice(start, start + pageSize)
   }, [currentPage, filteredProducts])
 
+  const applyFilters = () => {
+    setCurrentPage(1)
+    setFilters(filterForm.getFieldsValue())
+  }
+
+  const resetFilters = () => {
+    filterForm.resetFields()
+    setCurrentPage(1)
+    setFilters({})
+  }
+
   return (
     <section className="products-page" aria-label="Danh sách sản phẩm">
       <div className="products-page-inner">
-        <div className="products-toolbar">
-          <p className="products-summary">{filteredProducts.length} sản phẩm</p>
-        </div>
+
 
         <div className="products-layout">
-          <aside className="products-filter" aria-label="Bộ lọc sản phẩm">
-            <div className="filter-title">Lọc sản phẩm</div>
-            <div className="filter-block">
-              <Form
-                form={filterForm}
-                layout="vertical"
-                onFinish={() => {
-                  setCurrentPage(1)
-                  setFilters(filterForm.getFieldsValue())
-                }}
-              >
-                <Form.Item name="name" label="Tên sản phẩm">
-                  <Input placeholder="Tìm theo tên" allowClear />
-                </Form.Item>
+          <section className="products-filter" aria-label="Bộ lọc sản phẩm">
+            <Form form={filterForm} layout="vertical">
+              <FilterBox onSearch={applyFilters} onReset={resetFilters}>
+                <Col xs={24} sm={12} md={8} lg={6} xl={6}>
+                  <Form.Item name="name" label="Tên sản phẩm" style={{ marginBottom: 0 }}>
+                    <Input placeholder="Tên biến thể / sản phẩm" allowClear />
+                  </Form.Item>
+                </Col>
 
-                <Form.Item name="brandId" label="Thương hiệu">
-                  <Select
-                    placeholder="Chọn thương hiệu"
-                    allowClear
-                    options={brands.map(item => ({ value: item.id, label: item.name }))}
-                  />
-                </Form.Item>
+                <Col xs={24} sm={12} md={8} lg={6} xl={6}>
+                  <Form.Item name="productName" label="Sản phẩm gốc" style={{ marginBottom: 0 }}>
+                    <Select
+                      placeholder="Chọn sản phẩm"
+                      allowClear
+                      options={productNameOptions.map(name => ({ value: name, label: name }))}
+                    />
+                  </Form.Item>
+                </Col>
 
-                <Form.Item name="marterialId" label="Chất liệu">
-                  <Select
-                    placeholder="Chọn chất liệu"
-                    allowClear
-                    options={materials.map(item => ({ value: item.id, label: item.name }))}
-                  />
-                </Form.Item>
+                <Col xs={24} sm={12} md={8} lg={4} xl={6}>
+                  <Form.Item name="colorName" label="Màu sắc" style={{ marginBottom: 0 }}>
+                    <Select
+                      placeholder="Chọn màu"
+                      allowClear
+                      options={colorOptions.map(name => ({ value: name, label: name }))}
+                    />
+                  </Form.Item>
+                </Col>
 
-                <Row gutter={8}>
-                  <Col span={12}>
-                    <Button htmlType="submit" type="primary" block>
-                      Tìm kiếm
-                    </Button>
-                  </Col>
-                  <Col span={12}>
-                    <Button
-                      block
-                      onClick={() => {
-                        filterForm.resetFields()
-                        setCurrentPage(1)
-                        setFilters({})
-                      }}
-                    >
-                      Đặt lại
-                    </Button>
-                  </Col>
-                </Row>
-              </Form>
-            </div>
-          </aside>
+                <Col xs={24} sm={12} md={8} lg={4} xl={6}>
+                  <Form.Item name="sizeName" label="Kích cỡ" style={{ marginBottom: 0 }}>
+                    <Select
+                      placeholder="Chọn size"
+                      allowClear
+                      options={sizeOptions.map(name => ({ value: name, label: name }))}
+                    />
+                  </Form.Item>
+                </Col>
+
+                <Col xs={24} sm={12} md={8} lg={8} xl={6}>
+                  <Form.Item label="Khoảng giá" style={{ marginBottom: 0 }}>
+                    <div className="products-price-range">
+                      <Form.Item name="minPrice" noStyle>
+                        <InputNumber style={{ width: '100%' }} min={0} step={10000} placeholder="Từ" />
+                      </Form.Item>
+                      <Form.Item name="maxPrice" noStyle>
+                        <InputNumber style={{ width: '100%' }} min={0} step={10000} placeholder="Đến" />
+                      </Form.Item>
+                    </div>
+                  </Form.Item>
+                </Col>
+
+                <Col xs={24} sm={12} md={8} lg={4} xl={6}>
+                  <Form.Item name="stockStatus" label="Tồn kho" style={{ marginBottom: 0 }}>
+                    <Select
+                      placeholder="Trạng thái"
+                      allowClear
+                      options={[
+                        { value: 'inStock', label: 'Còn hàng' },
+                        { value: 'outOfStock', label: 'Hết hàng' },
+                      ]}
+                    />
+                  </Form.Item>
+                </Col>
+              </FilterBox>
+            </Form>
+          </section>
 
           <div className="products-content">
             <h3 className="products-subtitle">Danh sách sản phẩm</h3>
@@ -186,22 +236,38 @@ export default function ProductsPage() {
                       key={product.id}
                       role="button"
                       tabIndex={0}
-                      onClick={() => navigate(`/products/${product.id}`)}
+                      onClick={() => navigate(`/products/${product.productId || product.id}?detailId=${product.id}`)}
                       onKeyDown={(event) => {
                         if (event.key === 'Enter' || event.key === ' ') {
                           event.preventDefault()
-                          navigate(`/products/${product.id}`)
+                          navigate(`/products/${product.productId || product.id}?detailId=${product.id}`)
                         }
                       }}
                     >
                       <div className="products-image-wrap">
                         <img src={product.image} alt={product.name} className="products-image" />
                         <div className="products-overlay">
-                          <button type="button" className="products-detail-btn">Xem chi tiết</button>
+                          <button type="button" className="products-detail-btn">Xem nhanh</button>
                         </div>
                       </div>
                       <div className="products-body">
                         <h3>{product.name}</h3>
+                        <div className="products-tags">
+                          <span>{product.colorName}</span>
+                          <span>Size {product.sizeName}</span>
+                        </div>
+                        <p>{product.description || `Thiết kế ${product.productName} trẻ trung, dễ phối đồ.`}</p>
+
+                        <div className="products-card-footer">
+                          <div className="products-price-wrap">
+                            <strong>{formatPrice(product.salePrice)}</strong>
+                            <small>{product.quantity > 0 ? `Còn ${product.quantity} sản phẩm` : 'Tạm hết hàng'}</small>
+                          </div>
+
+                          <button type="button" className="products-cart-btn">
+                            Xem chi tiết
+                          </button>
+                        </div>
                       </div>
                     </article>
                   ))}
