@@ -39,7 +39,7 @@ export default function ProductsPage() {
   const [filterForm] = Form.useForm<FilterValues>()
   const [filters, setFilters] = useState<FilterValues>({})
   const [currentPage, setCurrentPage] = useState(1)
-  const pageSize = 12
+  const pageSize = 10
 
   const { data, isLoading } = useQuery({
     queryKey: ['catalog-product-details-page'],

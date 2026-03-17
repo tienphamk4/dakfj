@@ -11,12 +11,13 @@ const STATUS_LABELS: Record<number, { label: string; color: string }> = {
   0: { label: 'Chờ xác nhận', color: 'gold' },
   1: { label: 'Đã xác nhận', color: 'blue' },
   2: { label: 'Đang giao hàng', color: 'cyan' },
+  6: { label: 'Đã giao', color: 'geekblue' },
   3: { label: 'Đã hủy', color: 'red' },
   4: { label: 'Đơn bị hoàn', color: 'volcano' },
   5: { label: 'Hoàn thành', color: 'green' },
 }
 
-const STATUS_ORDER = [0, 1, 2, 5, 3]
+const STATUS_ORDER = [0, 1, 2, 6, 5, 3]
 const ALL_STATUS = 'all'
 type StatusFilterValue = number | typeof ALL_STATUS
 
@@ -24,6 +25,7 @@ const STATUS_BUTTON_STYLES: Record<number, { bg: string; border: string; text: s
   0: { bg: '#fffbe6', border: '#ffe58f', text: '#ad6800', activeBg: '#faad14' },
   1: { bg: '#e6f4ff', border: '#91caff', text: '#0958d9', activeBg: '#1677ff' },
   2: { bg: '#fff7e6', border: '#ffd591', text: '#d46b08', activeBg: '#fa8c16' },
+  6: { bg: '#f0f5ff', border: '#adc6ff', text: '#1d39c4', activeBg: '#2f54eb' },
   5: { bg: '#f6ffed', border: '#b7eb8f', text: '#389e0d', activeBg: '#52c41a' },
   3: { bg: '#fff1f0', border: '#ffa39e', text: '#cf1322', activeBg: '#f5222d' },
 }
