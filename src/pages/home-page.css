@@ -261,6 +261,7 @@
   background: #eef0f3;
   aspect-ratio: 4 / 6;
   overflow: hidden;
+  border-radius: 16px;
 }
 
 .hp-sale-image {
@@ -296,6 +297,7 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  text-align: center;
 }
 
 .hp-sale-nav {
@@ -387,27 +389,33 @@
 
 .hp-product-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 20px;
 }
 
 .hp-product-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
   cursor: pointer;
-  border: none;
-  border-radius: 0;
+  border-radius: 20px;
+  border: 1px solid #f1c7cc;
   overflow: hidden;
-  background: transparent;
-  transition: transform 0.28s ease;
+  background: #fff;
+  transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
 }
 
-.hp-product-card:hover {
-  transform: translateY(-2px);
+.hp-product-card:hover,
+.hp-product-card:focus-within {
+  transform: translateY(-4px);
 }
 
 .hp-product-image-wrap {
   position: relative;
-  aspect-ratio: 4 / 6;
-  background: #eef0f3;
+  aspect-ratio: 1 / 1;
+  min-height: 0;
+  background: linear-gradient(180deg, #f2f5fa, #e8eef7);
   overflow: hidden;
 }
 
@@ -419,13 +427,13 @@
 }
 
 .hp-product-card:hover .hp-product-image {
-  transform: scale(1.06);
+  transform: scale(1.05);
 }
 
 .hp-product-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.34);
+  background: linear-gradient(180deg, rgba(60, 12, 20, 0.1), rgba(60, 12, 20, 0.48));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -439,29 +447,30 @@
 
 .hp-product-detail-btn {
   border: 0;
-  background: #fff;
-  color: #1f2b3a;
+  background: #fff6f7;
+  color: #832e39;
   border-radius: 999px;
-  padding: 8px 14px;
+  padding: 9px 16px;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
 }
 
 .hp-product-body {
-  padding: 12px 0 0;
+  padding: 12px 12px 10px;
   display: flex;
   flex-direction: column;
+  gap: 8px;
+  flex: 1;
 }
 
 .hp-product-body h3 {
   margin: 0;
-  font-size: 18px;
-  font-family: 'Lato', sans-serif;
-  font-weight: 400;
-  color: #1f2b3a;
+  font-size: 16px;
+  font-weight: 700;
+  color: #3b1f25;
   line-height: 1.25;
-  min-height: calc(1.25em * 2);
+  min-height: calc(1.25em * 1.7);
   display: -webkit-box;
   line-clamp: 2;
   -webkit-line-clamp: 2;
@@ -470,32 +479,75 @@
 }
 
 .hp-product-body p {
-  margin: 8px 0 0;
-  color: var(--hp-primary);
+  margin: 0;
+  color: #6d5056;
+  font-size: 12px;
+  line-height: 1.45;
+  min-height: calc(1.45em * 1.9);
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hp-product-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.hp-product-tags span {
+  border: 1px solid #f1bbc2;
+  border-radius: 999px;
+  color: #923643;
+  font-size: 11px;
+  padding: 2px 8px;
+  font-weight: 600;
+  background: #fff5f6;
+}
+
+.hp-product-card-footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.hp-product-price-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hp-product-price-wrap strong {
   font-size: 17px;
-  font-weight: 600;
+  color: #ff4d4f;
+  line-height: 1.2;
 }
 
-.hp-add-cart {
-  width: 100%;
-  border: none;
-  background: var(--hp-dark);
-  color: var(--hp-white);
-  padding: 10px 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-weight: 600;
+.hp-product-price-wrap small {
+  color: #8e767b;
+  font-size: 11px;
+}
+
+.hp-product-cart-btn {
+  border: 0;
+  border-radius: 12px;
+  min-width: 84px;
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: #ff4d4f;
   cursor: pointer;
-  transition: background-color 0.25s ease;
+  box-shadow: 0 8px 18px rgba(255, 77, 79, 0.28);
 }
 
-.hp-add-cart:hover:not(:disabled) {
-  background: var(--hp-primary);
-}
-
-.hp-add-cart:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.hp-product-cart-btn:hover {
+  background: #d63a3d;
 }
 
 .hp-collection {

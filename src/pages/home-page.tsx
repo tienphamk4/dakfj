@@ -24,6 +24,7 @@ import promoPg2 from '@/assets/pg_2.jpeg'
 import './home-page.css'
 
 const fallbackImage = '/template/images/product-item5.jpg'
+const HOME_PRODUCT_LIMIT = 10
 
 const heroSlides = [
   {
@@ -97,16 +98,25 @@ export default function HomePage() {
         detailId: item.id,
         productId: item.productId,
         name: item.productName || item.name || 'Sản phẩm',
+        description: item.description || '',
+        colorName: item.colorName || 'N/A',
+        sizeName: item.sizeName || 'N/A',
+        quantity: item.quantity ?? 0,
         salePrice: item.salePrice ?? 0,
         image: resolveImageUrl(item.images?.[0]) ?? fallbackImage,
       }))
   }, [products])
 
-  const filteredProducts = useMemo(() => {
-    if (!search.trim()) return normalizedHomepageProducts.slice(0, 10)
+  const displayedProducts = useMemo(() => {
+    if (!search.trim()){
+       console.log(normalizedHomepageProducts);
+    } return normalizedHomepageProducts.slice(0, 8)
+
+     
+      
     return normalizedHomepageProducts
       .filter((p) => (p.name || '').toLowerCase().includes(search.toLowerCase()))
-      .slice(0, 10)
+      .slice(0, HOME_PRODUCT_LIMIT)
   }, [normalizedHomepageProducts, search])
 
   const visibleSaleProducts = useMemo(() => {
@@ -286,11 +296,11 @@ export default function HomePage() {
               <div className="hp-loading">
                 <Spin size="large" />
               </div>
-            ) : filteredProducts.length === 0 ? (
+            ) : displayedProducts.length === 0 ? (
               <p className="hp-empty">Không tìm thấy sản phẩm phù hợp.</p>
             ) : (
               <div className="hp-product-grid">
-                {filteredProducts.map((product) => {
+                {displayedProducts.map((product) => {
                   return (
                     <article
                       className="hp-product-card"
@@ -307,10 +317,24 @@ export default function HomePage() {
                     >
                       <div className="hp-product-image-wrap">
                         <img src={product.image} alt={product.name} className="hp-product-image" />
+                        <div className="hp-product-overlay">
+                          <button type="button" className="hp-product-detail-btn">Xem nhanh</button>
+                        </div>
                       </div>
                       <div className="hp-product-body">
                         <h3>{product.name}</h3>
-                        <p>{formatPrice(product.salePrice ?? 0)}</p>
+                        <div className="hp-product-tags">
+                          <span>{product.colorName}</span>
+                          <span>Size {product.sizeName}</span>
+                        </div>
+                        <p>{product.description || `Thiết kế ${product.name} trẻ trung, dễ phối đồ.`}</p>
+                        <div className="hp-product-card-footer">
+                          <div className="hp-product-price-wrap">
+                            <strong>{formatPrice(product.salePrice ?? 0)}</strong>
+                            <small>{product.quantity > 0 ? `Còn ${product.quantity} sản phẩm` : 'Tạm hết hàng'}</small>
+                          </div>
+                          <button type="button" className="hp-product-cart-btn">Xem chi tiết</button>
+                        </div>
                       </div>
                     </article>
                   )
