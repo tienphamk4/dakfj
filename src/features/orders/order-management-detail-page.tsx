@@ -22,6 +22,7 @@ const STATUS_LABELS: Record<number, { label: string; color: string }> = {
 const PAYMENT_STATUS_LABELS: Record<number, { label: string; color: string }> = {
   0: { label: 'Chưa thanh toán', color: 'default' },
   1: { label: 'Đã thanh toán', color: 'green' },
+  3: { label: 'Hủy thanh toán', color: 'volcano' },
 }
 
 const ORDER_TYPE_LABELS: Record<number, string> = {
@@ -75,12 +76,12 @@ export default function OrderManagementDetailPage({ rolePath }: OrderManagementD
   const isTerminal = order ? TERMINAL_STATUSES.includes(order.status) : false
   const availableStatusOptions = order
     ? [
-        { value: order.status, label: `${STATUS_LABELS[order.status]?.label ?? order.status} (hiện tại)` },
-        ...(STATUS_TRANSITIONS[order.status] ?? []).map(status => ({
-          value: status,
-          label: STATUS_LABELS[status]?.label ?? String(status),
-        })),
-      ]
+      { value: order.status, label: `${STATUS_LABELS[order.status]?.label ?? order.status} (hiện tại)` },
+      ...(STATUS_TRANSITIONS[order.status] ?? []).map(status => ({
+        value: status,
+        label: STATUS_LABELS[status]?.label ?? String(status),
+      })),
+    ]
     : []
 
   useEffect(() => {
