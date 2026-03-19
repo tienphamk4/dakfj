@@ -1,5 +1,8 @@
+import { useState, useMemo } from 'react'
+import dayjs from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import { useNavigate } from 'react-router-dom'
-import { Button, Card, Col, Progress, Row, Skeleton, Statistic, Typography } from 'antd'
+import { Button, Card, Col, Progress, Row, Skeleton, Statistic, Typography, DatePicker } from 'antd'
 import {
   AppstoreOutlined,
   BgColorsOutlined,
@@ -9,11 +12,45 @@ import {
   TagOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
+} from 'recharts'
 import { getBrands, getColors, getMaterials, getSizes } from '@/services/catalog.service'
 import { getProducts, getProductDetails } from '@/services/product.service'
+import { getAdminDashboard } from '@/services/statistics.service'
 
 export default function DashboardPage() {
   const navigate = useNavigate()
+
+  const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([dayjs().subtract(1, 'month'), dayjs()])
+
+  const fromDateStr = dateRange[0] ? dateRange[0].format('YYYY-MM-DD') : undefined
+  const toDateStr = dateRange[1] ? dateRange[1].format('YYYY-MM-DD') : undefined
+
+  const { data: dashboardRes, isLoading: loadingDashboard } = useQuery({
+    queryKey: ['admin-dashboard', fromDateStr, toDateStr],
+    queryFn: () => getAdminDashboard(fromDateStr, toDateStr).then(r => r.data),
+    staleTime: 60_000,
+  })
+
+  const lowStockData = useMemo(() => {
+    if (!dashboardRes?.data?.lowStockProducts) return []
+    return dashboardRes.data.lowStockProducts.map(p => ({
+      ...p,
+      displayName: `${p.productName} - ${p.colorName} - ${p.sizeName}`
+    }))
+  }, [dashboardRes])
+
 
   const { data: productsRes, isLoading: loadingProducts } = useQuery({
     queryKey: ['products-admin'],
@@ -62,7 +99,128 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <Typography.Title level={3} style={{ marginBottom: 24 }}>Dashboard</Typography.Title>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <Typography.Title level={3} style={{ margin: 0 }}>Dashboard</Typography.Title>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <Button onClick={() => setDateRange([dayjs(), dayjs()])}>Hôm nay</Button>
+          <Button onClick={() => setDateRange([dayjs().startOf('week'), dayjs().endOf('week')])}>Tuần này</Button>
+          <Button onClick={() => setDateRange([dayjs().startOf('month'), dayjs().endOf('month')])}>Tháng này</Button>
+          <DatePicker.RangePicker
+            value={dateRange[0] && dateRange[1] ? [dateRange[0], dateRange[1]] : undefined}
+            onChange={(dates) => {
+              if (dates) {
+                setDateRange([dates[0], dates[1]])
+              } else {
+                setDateRange([null, null])
+              }
+            }}
+          />
+        </div>
+      </div>
+
+      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+        <Col span={16}>
+          <Card title="Doanh thu theo ngày">
+            {loadingDashboard ? (
+               <Skeleton active paragraph={{ rows: 6 }} />
+            ) : (
+              <div style={{ width: '100%', height: 300 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={dashboardRes?.data?.revenueOverTime ?? []}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis tickFormatter={(val) => `${(val / 1000000).toFixed(1)}M`} />
+                    <Tooltip formatter={(value: any) => [`${value.toLocaleString()} ₫`, 'Doanh thu']} />
+                    <Legend />
+                    <Line type="monotone" dataKey="revenue" name="Doanh thu" stroke="#8884d8" activeDot={{ r: 8 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Row gutter={[16, 16]}>
+            <Col span={24}>
+              <Card>
+                {loadingDashboard ? <Skeleton.Button active style={{ width: 120 }} /> : (
+                  <Statistic title="Tổng số đơn hàng" value={dashboardRes?.data?.totalOrders ?? 0} prefix={<ShopOutlined />} valueStyle={{ color: '#fa541c' }} />
+                )}
+              </Card>
+            </Col>
+            <Col span={24}>
+              <Card>
+                {loadingDashboard ? <Skeleton.Button active style={{ width: 120 }} /> : (
+                  <Statistic
+                    title="Tổng lợi nhuận"
+                    value={dashboardRes?.data?.revenueOverTime?.reduce((acc, curr) => acc + curr.revenue, 0) ?? 0}
+                    suffix="₫"
+                    valueStyle={{ color: '#52c41a' }}
+                  />
+                )}
+              </Card>
+            </Col>
+          </Row>
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+        <Col span={12}>
+          <Card title="Sản phẩm tồn kho thấp (Tất cả sản phẩm)">
+            {loadingDashboard ? (
+               <Skeleton active paragraph={{ rows: 6 }} />
+            ) : (
+              <div style={{ width: '100%', height: 300 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={lowStockData}
+                    margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+                    layout="vertical"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" />
+                    <YAxis dataKey="displayName" type="category" width={150} tick={{ fontSize: 11 }} />
+                    <Tooltip formatter={(value: any) => [value, 'Tồn kho']} />
+                    <Legend />
+                    <Bar dataKey="quantity" name="Số lượng tồn">
+                      {lowStockData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.quantity === 0 ? '#ff4d4f' : '#faad14'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </Card>
+        </Col>
+        <Col span={12}>
+          <Card title="Sản phẩm bán chạy nhất">
+             {loadingDashboard ? (
+               <Skeleton active paragraph={{ rows: 6 }} />
+            ) : (
+              <div style={{ width: '100%', height: 300 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={dashboardRes?.data?.bestSellingProducts ?? []}
+                    margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+                    layout="vertical"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" />
+                    <YAxis dataKey="productName" type="category" width={150} tick={{ fontSize: 11 }} />
+                    <Tooltip formatter={(value: any) => [value, 'Đã bán']} />
+                    <Legend />
+                    <Bar dataKey="quantitySold" name="Số lượng bán" fill="#82ca9d" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </Card>
+        </Col>
+      </Row>
 
       {/* Row 1: Products, Product Details, Brands */}
       <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>

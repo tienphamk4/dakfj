@@ -104,3 +104,27 @@ export interface NotificationMessage {
   orderId?: string
   createdAt?: string | Date
 }
+
+export interface RevenueDaily {
+  date: string
+  revenue: number
+}
+
+export interface LowStockProduct {
+  quantity: number
+  productName: string
+  colorName: string
+  sizeName: string
+}
+
+export interface BestSellingProduct {
+  productName: string
+  quantitySold: number
+}
+
+export interface AdminDashboardResponse {
+  revenueOverTime: RevenueDaily[]
+  lowStockProducts: LowStockProduct[]
+  bestSellingProducts: BestSellingProduct[]
+  totalOrders: number
+}

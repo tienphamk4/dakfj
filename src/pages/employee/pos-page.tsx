@@ -27,7 +27,7 @@ import {
   TagOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { getProducts, searchProductDetails, getProductDetailsByProductId } from '@/services/product.service'
+import { getProducts, getProductDetailsByProductId } from '@/services/product.service'
 import { createEmployeeOrder } from '@/services/employee.service'
 import { resolveImageUrl } from '@/utils/image-url'
 import type { EmployeeOrderRequest, PaymentMethod, ProductDetailResponse, ProductResponse, VNPayResponse } from '@/types'
