@@ -1,9 +1,11 @@
 import { useNavigate } from 'react-router-dom'
-import { Button, Empty, Table, Tag, Typography } from 'antd'
+import { Button, Empty, Table, Tag, Typography, Popconfirm, message } from 'antd'
 import { EyeOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { getUserOrders } from '@/services/user-orders.service'
+import { cancelUserOrder } from '@/services/user-orders.service'
 import type { OrderResponse } from '@/types'
 import type { ColumnsType } from 'antd/es/table'
 
@@ -24,6 +26,18 @@ export default function UserOrdersPage() {
     queryKey: ['user-orders'],
     queryFn: () => getUserOrders().then(r => r.data),
   })
+
+  const queryClient = useQueryClient()
+
+  const handleCancelOrder = async (id: string) => {
+    try {
+      await cancelUserOrder(id)
+      message.success('Hủy đơn thành công')
+      queryClient.invalidateQueries({ queryKey: ['user-orders'] })
+    } catch (err) {
+      message.error('Hủy đơn thất bại')
+    }
+  }
 
   const orders = data?.data ?? []
 
@@ -59,12 +73,28 @@ export default function UserOrdersPage() {
     {
       title: 'Thao tác',
       key: 'action',
-      width: 100,
-      render: (_: unknown, record: OrderResponse) => (
-        <Button icon={<EyeOutlined />} onClick={() => navigate(`/orders/${record.id}`)}>
-          Xem
-        </Button>
-      ),
+      width: 200,
+      render: (_: unknown, record: OrderResponse) => {
+        const canCancel = [0, 1, 6].includes(record.status)
+        return (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button icon={<EyeOutlined />} onClick={() => navigate(`/orders/${record.id}`)}>
+              Xem
+            </Button>
+
+            {canCancel && (
+              <Popconfirm
+                title="Bạn có chắc muốn hủy đơn này?"
+                okText="Hủy"
+                cancelText="Không"
+                onConfirm={() => handleCancelOrder(record.id)}
+              >
+                <Button danger>Hủy</Button>
+              </Popconfirm>
+            )}
+          </div>
+        )
+      },
     },
   ]
 

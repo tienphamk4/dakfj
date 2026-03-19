@@ -9,3 +9,6 @@ export const getUserOrderDetail = (id: string) =>
 
 export const downloadOrderInvoice = (id: string) =>
   axiosInstance.get(`/api/order/${id}/invoice`, { responseType: 'blob' })
+
+export const cancelUserOrder = (id: string) =>
+  axiosInstance.post<ApiResponse<null>>(`/api/user/orders/cancel/${id}`)
