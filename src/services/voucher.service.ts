@@ -4,6 +4,9 @@ import type { ApiResponse, VoucherResponse, CreateVoucherRequest, UpdateVoucherR
 export const getVouchers = () =>
   axiosInstance.get<ApiResponse<VoucherResponse[]>>('/api/admin/vouchers')
 
+export const getVouchersByPrice = (price: number) =>
+  axiosInstance.get<ApiResponse<VoucherResponse[]>>(`/api/admin/vouchers?price=${price}`)
+
 export const createVoucher = (body: CreateVoucherRequest) =>
   axiosInstance.post<ApiResponse<VoucherResponse>>('/api/admin/vouchers', body)
 

@@ -120,7 +120,15 @@ export default function OrderManagementDetailPage({ rolePath }: OrderManagementD
       key: 'salePrice',
       render: (v: number) => v.toLocaleString('vi-VN') + ' đ',
     },
-    { title: 'Tồn kho', dataIndex: 'quantity', key: 'quantity' },
+    { title: 'Số lượng mua', dataIndex: 'quantityInOrder', key: 'quantityInOrder' },
+    {
+      title: 'Thành tiền',
+      key: 'total',
+      render: (_: unknown, record: ProductDetailResponse) => {
+        const qty = record.quantityInOrder ?? record.quantity
+        return (qty * record.salePrice).toLocaleString('vi-VN') + ' đ'
+      },
+    },
     {
       title: 'Xem sản phẩm',
       key: 'viewProduct',
@@ -160,10 +168,12 @@ export default function OrderManagementDetailPage({ rolePath }: OrderManagementD
                 {order.paymentDate ? dayjs(order.paymentDate).format('DD/MM/YYYY HH:mm') : '—'}
               </Descriptions.Item>
               <Descriptions.Item label="Mã voucher">{order.voucherCode || '—'}</Descriptions.Item>
-              <Descriptions.Item label="Khách hàng">{order.userResponse?.name || 'Khách lẻ'}</Descriptions.Item>
-              <Descriptions.Item label="Email khách">{order.userResponse?.email || '—'}</Descriptions.Item>
-              <Descriptions.Item label="Số điện thoại">{order.userResponse?.phone || '—'}</Descriptions.Item>
-              <Descriptions.Item label="Địa chỉ giao hàng" span={2}>{order.userResponse?.address || '—'}</Descriptions.Item>
+              <Descriptions.Item label="Người mua">{order.customerResponse?.name || 'Khách lẻ'}</Descriptions.Item>
+              <Descriptions.Item label="Email người mua">{order.customerResponse?.email || '—'}</Descriptions.Item>
+              <Descriptions.Item label="SĐT người mua">{order.customerResponse?.phone || '—'}</Descriptions.Item>
+              <Descriptions.Item label="Địa chỉ giao hàng" span={2}>{order.customerResponse?.address || '—'}</Descriptions.Item>
+              <Descriptions.Item label="Người xác nhận">{order.userResponse?.name || '—'}</Descriptions.Item>
+              <Descriptions.Item label="SĐT người xác nhận">{order.userResponse?.phone || '—'}</Descriptions.Item>
               <Descriptions.Item label="Ghi chú" span={2}>{order.note || '—'}</Descriptions.Item>
               <Descriptions.Item label="Tạm tính">{order.subTotal.toLocaleString('vi-VN')} đ</Descriptions.Item>
               <Descriptions.Item label="Giảm giá">{order.discount.toLocaleString('vi-VN')} đ</Descriptions.Item>

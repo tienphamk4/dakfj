@@ -13,11 +13,16 @@ import {
   Spin,
   Table,
   Typography,
+  Modal,
+  List,
+  Tag,
 } from 'antd'
+import { CheckOutlined } from '@ant-design/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { getCart } from '@/services/cart.service'
 import { checkVoucher, placeOrder } from '@/services/order.service'
-import type { CartItem, OrderRequest, OrderResponse, PaymentMethod, VNPayResponse, VoucherCheckResponse } from '@/types'
+import { getVouchersByPrice } from '@/services/voucher.service'
+import type { CartItem, OrderRequest, OrderResponse, PaymentMethod, VNPayResponse, VoucherCheckResponse, VoucherResponse } from '@/types'
 import { resolveImageUrl } from '@/utils/image-url'
 import './order-confirm-page.css'
 const SHIPPING_FEE = 30_000
@@ -37,6 +42,7 @@ export default function OrderConfirmPage() {
 
   const [voucherCode, setVoucherCode] = useState('')
   const [voucherResult, setVoucherResult] = useState<VoucherCheckResponse | null>(null)
+  const [isVoucherModalOpen, setIsVoucherModalOpen] = useState(false)
 
   const { data, isLoading } = useQuery({
     queryKey: ['cart'],
@@ -50,6 +56,13 @@ export default function OrderConfirmPage() {
     (sum, i) => sum + i.productDetail.salePrice * i.quantity,
     0
   )
+
+  const { data: vouchersData, isLoading: isVouchersLoading } = useQuery({
+    queryKey: ['vouchers', subTotal],
+    queryFn: () => getVouchersByPrice(subTotal).then(r => r.data),
+    enabled: isVoucherModalOpen,
+  })
+  const vouchers = vouchersData?.data ?? []
   const discount = voucherResult?.discountAmount ?? 0
   const total = subTotal - discount + SHIPPING_FEE
 
@@ -199,28 +212,35 @@ export default function OrderConfirmPage() {
 
           {/* Voucher */}
           <Form.Item label="Mã giảm giá">
-            <Input.Search
+            <Input
               className="oc-voucher-input"
               value={voucherCode}
-              onChange={e => {
-                setVoucherCode(e.target.value)
-                if (!e.target.value) setVoucherResult(null)
-              }}
-              enterButton="Áp dụng"
-              placeholder="Nhập mã giảm giá"
-              loading={voucherMutation.isPending}
-              onSearch={code => {
-                if (!code.trim()) {
-                  setVoucherResult(null)
-                  return
-                }
-                voucherMutation.mutate(code.trim())
-              }}
+              readOnly
+              onClick={() => setIsVoucherModalOpen(true)}
+              placeholder="Chọn mã giảm giá"
+              suffix={
+                <Button type="primary" onClick={() => setIsVoucherModalOpen(true)}>
+                  Chọn Voucher
+                </Button>
+              }
             />
             {voucherResult && (
-              <Typography.Text type="success" className="oc-voucher-success">
-                {voucherResult.ten} — Giảm {voucherResult.discountAmount.toLocaleString('vi-VN')}₫
-              </Typography.Text>
+              <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography.Text type="success" className="oc-voucher-success">
+                  {voucherResult.ten} — Giảm {voucherResult.discountAmount.toLocaleString('vi-VN')}₫
+                </Typography.Text>
+                <Button 
+                  type="link" 
+                  danger 
+                  onClick={() => {
+                    setVoucherCode('')
+                    setVoucherResult(null)
+                  }}
+                  style={{ padding: 0 }}
+                >
+                  Xóa
+                </Button>
+              </div>
             )}
           </Form.Item>
 
@@ -268,6 +288,64 @@ export default function OrderConfirmPage() {
           </Form.Item>
         </Form>
       </Card>
+      {/* Voucher Modal */}
+      <Modal
+        title="Chọn mã giảm giá"
+        open={isVoucherModalOpen}
+        onCancel={() => setIsVoucherModalOpen(false)}
+        footer={null}
+        destroyOnClose
+        styles={{ body: { maxHeight: '60vh', overflowY: 'auto', padding: '12px 0' } }}
+      >
+        <Spin spinning={isVouchersLoading}>
+          <List
+            dataSource={vouchers}
+            locale={{ emptyText: 'Không có mã giảm giá nào' }}
+            renderItem={(item: VoucherResponse) => (
+              <List.Item
+                style={{
+                  opacity: item.valid === false ? 0.5 : 1,
+                  cursor: item.valid === false ? 'not-allowed' : 'pointer',
+                  backgroundColor: voucherCode === item.ma ? '#e6f4ff' : 'transparent',
+                  padding: '12px',
+                  border: '1px solid #f0f0f0',
+                  borderRadius: '8px',
+                  marginBottom: '8px',
+                  margin: '0 12px 8px 12px',
+                }}
+                onClick={() => {
+                  if (item.valid !== false) {
+                    setVoucherCode(item.ma)
+                    setIsVoucherModalOpen(false)
+                    voucherMutation.mutate(item.ma)
+                  }
+                }}
+              >
+                <List.Item.Meta
+                  title={
+                    <Space>
+                      <strong>{item.ma}</strong>
+                      <Tag color="green">
+                        {item.loaiGiam === 0 ? `${item.giaTriGiam}%` : `${item.giaTriGiam.toLocaleString('vi-VN')}₫`}
+                      </Tag>
+                    </Space>
+                  }
+                  description={
+                    <Space direction="vertical" size={0}>
+                      <Typography.Text>{item.ten}</Typography.Text>
+                      <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                        Tối thiểu: {item.toiThieu.toLocaleString('vi-VN')}₫
+                        {item.loaiGiam === 0 && item.toiDa > 0 && ` - Tối đa: ${item.toiDa.toLocaleString('vi-VN')}₫`}
+                      </Typography.Text>
+                    </Space>
+                  }
+                />
+                {voucherCode === item.ma && <CheckOutlined style={{ color: '#1677ff', fontSize: 20 }} />}
+              </List.Item>
+            )}
+          />
+        </Spin>
+      </Modal>
     </div>
   )
 }

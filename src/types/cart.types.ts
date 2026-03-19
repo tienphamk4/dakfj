@@ -55,6 +55,7 @@ export interface OrderResponse {
   voucherCode: string | null
   status: number
   userResponse: UserResponse | null
+  customerResponse?: UserResponse | null
   productDetailResponses: ProductDetailResponse[]
 }
 

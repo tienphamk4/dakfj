@@ -51,6 +51,7 @@ export interface VoucherResponse {
   trangThai: 0 | 1
   ngayBatDau: string
   ngayKetThuc: string
+  valid?: boolean
 }
 
 export interface CreateVoucherRequest {

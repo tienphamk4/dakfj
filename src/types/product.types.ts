@@ -26,6 +26,7 @@ export interface ProductDetailResponse {
   sizeId: string
   images: string[]
   deleteFlag?: boolean
+  quantityInOrder?: number
 }
 
 export interface SaleProductResponse {
