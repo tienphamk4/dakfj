@@ -11,6 +11,7 @@ const STATUS_LABELS: Record<number, { label: string; color: string }> = {
   0: { label: 'Chờ xác nhận', color: 'gold' },
   1: { label: 'Đã xác nhận', color: 'blue' },
   2: { label: 'Đang giao hàng', color: 'cyan' },
+  6: { label: 'Đã giao', color: 'geekblue' },
   3: { label: 'Đã hủy', color: 'red' },
   4: { label: 'Đơn bị hoàn', color: 'volcano' },
   5: { label: 'Hoàn thành', color: 'green' },
