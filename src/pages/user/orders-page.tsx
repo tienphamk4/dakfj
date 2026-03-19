@@ -1,9 +1,11 @@
 import { useNavigate } from 'react-router-dom'
-import { Button, Empty, Table, Tag, Typography } from 'antd'
+import { Button, Empty, Table, Tag, Typography, Popconfirm, message } from 'antd'
 import { EyeOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { getUserOrders } from '@/services/user-orders.service'
+import { cancelUserOrder } from '@/services/user-orders.service'
 import type { OrderResponse } from '@/types'
 import type { ColumnsType } from 'antd/es/table'
 
@@ -11,6 +13,7 @@ const STATUS_LABELS: Record<number, { label: string; color: string }> = {
   0: { label: 'Chờ xác nhận', color: 'gold' },
   1: { label: 'Đã xác nhận', color: 'blue' },
   2: { label: 'Đang giao hàng', color: 'cyan' },
+  6: { label: 'Đã giao', color: 'geekblue' },
   3: { label: 'Đã hủy', color: 'red' },
   4: { label: 'Đơn bị hoàn', color: 'volcano' },
   5: { label: 'Hoàn thành', color: 'green' },
@@ -23,6 +26,18 @@ export default function UserOrdersPage() {
     queryKey: ['user-orders'],
     queryFn: () => getUserOrders().then(r => r.data),
   })
+
+  const queryClient = useQueryClient()
+
+  const handleCancelOrder = async (id: string) => {
+    try {
+      await cancelUserOrder(id)
+      message.success('Hủy đơn thành công')
+      queryClient.invalidateQueries({ queryKey: ['user-orders'] })
+    } catch (err) {
+      message.error('Hủy đơn thất bại')
+    }
+  }
 
   const orders = data?.data ?? []
 
@@ -58,12 +73,28 @@ export default function UserOrdersPage() {
     {
       title: 'Thao tác',
       key: 'action',
-      width: 100,
-      render: (_: unknown, record: OrderResponse) => (
-        <Button icon={<EyeOutlined />} onClick={() => navigate(`/orders/${record.id}`)}>
-          Xem
-        </Button>
-      ),
+      width: 200,
+      render: (_: unknown, record: OrderResponse) => {
+        const canCancel = [0, 1, 6].includes(record.status)
+        return (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button icon={<EyeOutlined />} onClick={() => navigate(`/orders/${record.id}`)}>
+              Xem
+            </Button>
+
+            {canCancel && (
+              <Popconfirm
+                title="Bạn có chắc muốn hủy đơn này?"
+                okText="Hủy"
+                cancelText="Không"
+                onConfirm={() => handleCancelOrder(record.id)}
+              >
+                <Button danger>Hủy</Button>
+              </Popconfirm>
+            )}
+          </div>
+        )
+      },
     },
   ]
 

@@ -27,7 +27,7 @@ import {
   TagOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { getProducts, searchProductDetails } from '@/services/product.service'
+import { getProducts, searchProductDetails, getProductDetailsByProductId } from '@/services/product.service'
 import { createEmployeeOrder } from '@/services/employee.service'
 import { resolveImageUrl } from '@/utils/image-url'
 import type { EmployeeOrderRequest, PaymentMethod, ProductDetailResponse, ProductResponse, VNPayResponse } from '@/types'
@@ -179,7 +179,7 @@ function VariantDrawer({
 }) {
   const { data, isLoading } = useQuery({
     queryKey: ['pos-variants', product?.id],
-    queryFn: () => searchProductDetails({ name: product?.name }).then(r => r.data),
+    queryFn: () => getProductDetailsByProductId(product!.id).then(r => r.data),
     enabled: open && !!product,
   })
 
