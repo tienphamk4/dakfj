@@ -37,7 +37,7 @@ export const getProductDetailById = (id: string) =>
   axiosInstance.get<ApiResponse<ProductDetailResponse>>(`/api/admin/product-detail/${id}`)
 
 export interface CreateProductDetailBody {
-  name: string
+  // name: string
   description: string
   quantity: number
   costPrice: number

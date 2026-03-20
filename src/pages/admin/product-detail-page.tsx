@@ -19,7 +19,6 @@ import FilterBox from '@/components/admin/filter-box'
 import { resolveImageUrl } from '@/utils/image-url'
 
 interface ProductDetailForm {
-  name: string
   description: string
   quantity: number
   costPrice: number
@@ -99,7 +98,7 @@ export default function ProductDetailPage() {
       }
 
       const body: CreateProductDetailBody = {
-        name: values.name,
+        // name: values.name,
         description: values.description,
         quantity: values.quantity,
         costPrice: values.costPrice,
@@ -162,7 +161,7 @@ export default function ProductDetailPage() {
           })),
         )
         form.setFieldsValue({
-          name: record.name,
+          // name: record.name,
           description: record.description,
           quantity: record.quantity,
           costPrice: record.costPrice,
@@ -193,7 +192,7 @@ export default function ProductDetailPage() {
   }
 
   const columns = [
-    { title: 'Tên', dataIndex: 'name', key: 'name' },
+    { title: 'Tên', dataIndex: 'productName', key: 'productName' },
     { title: 'Màu', dataIndex: 'colorName', key: 'colorName' },
     { title: 'Size', dataIndex: 'sizeName', key: 'sizeName' },
     { title: 'SL', dataIndex: 'quantity', key: 'quantity', align: 'center' as const },
@@ -203,12 +202,12 @@ export default function ProductDetailPage() {
       key: 'salePrice',
       render: (v: number) => <Typography.Text type="danger">{v?.toLocaleString('vi-VN')}₫</Typography.Text>,
     },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'deleteFlag',
-      key: 'deleteFlag',
-      render: (v: boolean) => <Tag color={v ? 'red' : 'green'}>{v ? 'Đã xóa' : 'Đang bán'}</Tag>,
-    },
+    // {
+    //   title: 'Trạng thái',
+    //   dataIndex: 'deleteFlag',
+    //   key: 'deleteFlag',
+    //   render: (v: boolean) => <Tag color={v ? 'red' : 'green'}>{v ? 'Đã xóa' : 'Đang bán'}</Tag>,
+    // },
     {
       title: 'Hành động',
       key: 'actions',
@@ -324,9 +323,9 @@ export default function ProductDetailPage() {
         width={640}
       >
         <Form form={form} layout="vertical" onFinish={values => saveMutation.mutate(values)}>
-          <Form.Item name="name" label="Tên" rules={[{ required: true }]}>
+          {/* <Form.Item name="name" label="Tên" rules={[{ required: true }]}>
             <Input />
-          </Form.Item>
+          </Form.Item> */}
           <Form.Item name="description" label="Mô tả">
             <Input.TextArea rows={3} />
           </Form.Item>
@@ -395,7 +394,7 @@ export default function ProductDetailPage() {
         {detailItem && (
           <>
             <Descriptions column={1} bordered size="small" style={{ marginBottom: 16 }}>
-              <Descriptions.Item label="Tên">{detailItem.name}</Descriptions.Item>
+              {/* <Descriptions.Item label="Tên">{detailItem.name}</Descriptions.Item> */}
               <Descriptions.Item label="Mô tả">{detailItem.description || '—'}</Descriptions.Item>
               <Descriptions.Item label="Sản phẩm">{detailItem.productName}</Descriptions.Item>
               <Descriptions.Item label="Màu sắc">{detailItem.colorName}</Descriptions.Item>
