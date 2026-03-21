@@ -281,14 +281,13 @@ export default function ProductDetailPage() {
               <span>Cỡ</span>
               <div className="product-detail-options">
                 {sizeOptions.map((size) => {
-                  const disabled = !availableSizeIdsByColor.has(size.id)
+                  const isAvailableInCurrentColor = availableSizeIdsByColor.has(size.id)
                   return (
                     <button
                       key={size.id}
                       type="button"
-                      className={`product-detail-option-btn ${selectedSizeId === size.id ? 'active' : ''}`}
+                      className={`product-detail-option-btn ${selectedSizeId === size.id ? 'active' : ''} ${!isAvailableInCurrentColor ? 'unavailable' : ''}`}
                       onClick={() => handleSelectSize(size.id)}
-                      disabled={disabled}
                     >
                       {size.name}
                     </button>
@@ -301,14 +300,13 @@ export default function ProductDetailPage() {
               <span>Màu sắc</span>
               <div className="product-detail-options color-mode">
                 {colorOptions.map((color) => {
-                  const disabled = !availableColorIdsBySize.has(color.id)
+                  const isAvailableInCurrentSize = availableColorIdsBySize.has(color.id)
                   return (
                     <button
                       key={color.id}
                       type="button"
-                      className={`product-detail-option-btn ${selectedColorId === color.id ? 'active' : ''}`}
+                      className={`product-detail-option-btn ${selectedColorId === color.id ? 'active' : ''} ${!isAvailableInCurrentSize ? 'unavailable' : ''}`}
                       onClick={() => handleSelectColor(color.id)}
-                      disabled={disabled}
                     >
                       {color.name}
                     </button>

@@ -30,7 +30,6 @@ const ColorPage = lazy(() => import('@/pages/admin/color-page'))
 const MaterialPage = lazy(() => import('@/pages/admin/material-page'))
 const SizePage = lazy(() => import('@/pages/admin/size-page'))
 const ProductPage = lazy(() => import('@/pages/admin/product-page'))
-const ProductDetailPage = lazy(() => import('@/pages/admin/product-detail-page'))
 const UserAdminPage = lazy(() => import('@/pages/admin/user-page'))
 const VoucherPage = lazy(() => import('@/pages/admin/voucher-page'))
 const AdminOrdersPage = lazy(() => import('@/pages/admin/orders-page'))
@@ -91,7 +90,6 @@ export const router = createBrowserRouter([
           { path: '/admin/chat-lieu', element: wrap(<MaterialPage />) },
           { path: '/admin/size', element: wrap(<SizePage />) },
           { path: '/admin/san-pham', element: wrap(<ProductPage />) },
-          { path: '/admin/product-detail', element: wrap(<ProductDetailPage />) },
           { path: '/admin/orders', element: wrap(<AdminOrdersPage />) },
           { path: '/admin/orders/:id', element: wrap(<AdminOrderDetailPage />) },
           { path: '/admin/users', element: wrap(<UserAdminPage />) },

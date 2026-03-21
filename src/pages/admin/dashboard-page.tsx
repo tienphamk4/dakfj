@@ -90,7 +90,6 @@ export default function DashboardPage() {
 
   const quickLinks = [
     { label: 'Sản phẩm', path: '/admin/san-pham', icon: <ShopOutlined /> },
-    { label: 'Chi tiết SP', path: '/admin/product-detail', icon: <AppstoreOutlined /> },
     { label: 'Thương hiệu', path: '/admin/thuong-hieu', icon: <TagOutlined /> },
     { label: 'Màu sắc', path: '/admin/mau-sac', icon: <BgColorsOutlined /> },
     { label: 'Chất liệu', path: '/admin/chat-lieu', icon: <FontColorsOutlined /> },

@@ -23,7 +23,6 @@ const { Header, Sider, Content } = Layout
 const menuItems = [
   { key: '/admin', icon: <DashboardOutlined />, label: <Link to="/admin">Dashboard</Link> },
   { key: '/admin/san-pham', icon: <ShopOutlined />, label: <Link to="/admin/san-pham">Sản phẩm</Link> },
-  { key: '/admin/product-detail', icon: <AppstoreOutlined />, label: <Link to="/admin/product-detail">Chi tiết SP</Link> },
   { key: '/admin/orders', icon: <OrderedListOutlined />, label: <Link to="/admin/orders">Đơn hàng</Link> },
   {
     key: 'catalog',

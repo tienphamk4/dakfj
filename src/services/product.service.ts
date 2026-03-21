@@ -15,18 +15,42 @@ export const getProducts = () =>
 export const getProductById = (id: string) =>
   axiosInstance.get<ApiResponse<ProductResponse>>(`/api/admin/san-pham/${id}`)
 
+export interface ProductDetailItem {
+  name?: string
+  description?: string
+  quantity: number
+  costPrice: number
+  salePrice: number
+  sizeId: string
+  colorId: string
+  images: string[]
+}
+
+export interface ProductDetailUpdateItem extends ProductDetailItem {
+  id: string
+  deleteFlag: boolean
+  imagesDelete?: string[]
+}
+
 export interface CreateProductBody {
   name: string
   image: string
   status: 0 | 1
   marterialId: string // note: field name typo mirrors backend
   brandId: string
+  productDetails?: ProductDetailItem[]
+}
+
+export interface UpdateProductBody extends CreateProductBody {
+  id: string
+  productDetails?: ProductDetailItem[]
+  productDetailsUpdate?: ProductDetailUpdateItem[]
 }
 
 export const createProduct = (body: CreateProductBody) =>
   axiosInstance.post<ApiResponse<ProductResponse>>('/api/admin/san-pham', body)
 
-export const updateProduct = (body: CreateProductBody & { id: string }) =>
+export const updateProduct = (body: UpdateProductBody) =>
   axiosInstance.put<ApiResponse<ProductResponse>>('/api/admin/san-pham', body)
 
 // ── ProductDetail (product-detail) ───────────────────────────────────────────

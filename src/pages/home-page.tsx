@@ -11,7 +11,7 @@ import {
   TruckOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { getHomepageProducts, getSaleProducts } from '@/services/product.service'
+import { getCatalogProducts, getSaleProducts } from '@/services/product.service'
 import { resolveImageUrl } from '@/utils/image-url'
 import banner1 from '@/assets/banner_1.jpg'
 import banner2 from '@/assets/banner_2.jpg'
@@ -80,7 +80,7 @@ export default function HomePage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['homepage-products'],
-    queryFn: () => getHomepageProducts().then(r => r.data),
+    queryFn: () => getCatalogProducts().then(r => r.data),
   })
 
   const { data: saleData, isLoading: saleLoading } = useQuery({
@@ -92,28 +92,18 @@ export default function HomePage() {
   const saleProducts = saleData?.data ?? []
   const salePageSize = 4
   const normalizedHomepageProducts = useMemo(() => {
-    return products
-      .filter(item => !item.deleteFlag && Boolean(item.productId))
-      .map(item => ({
-        detailId: item.id,
-        productId: item.productId,
-        name: item.productName || item.name || 'Sản phẩm',
-        description: item.description || '',
-        colorName: item.colorName || 'N/A',
-        sizeName: item.sizeName || 'N/A',
-        quantity: item.quantity ?? 0,
-        salePrice: item.salePrice ?? 0,
-        image: resolveImageUrl(item.images?.[0]) ?? fallbackImage,
-      }))
+    return products.map(item => ({
+      productId: item.id,
+      name: item.ten || item.name || 'Sản phẩm',
+      salePrice: item.gia ?? item.salePrice ?? 0,
+      image: resolveImageUrl(item.anh ?? (item.images ? item.images[0] : null)) ?? fallbackImage,
+      brand: item.brand ?? '',
+    }))
   }, [products])
 
   const displayedProducts = useMemo(() => {
-    if (!search.trim()){
-       console.log(normalizedHomepageProducts);
-    } return normalizedHomepageProducts.slice(0, 8)
+    if (!search.trim()) return normalizedHomepageProducts.slice(0, 8)
 
-     
-      
     return normalizedHomepageProducts
       .filter((p) => (p.name || '').toLowerCase().includes(search.toLowerCase()))
       .slice(0, HOME_PRODUCT_LIMIT)
@@ -304,14 +294,14 @@ export default function HomePage() {
                   return (
                     <article
                       className="hp-product-card"
-                      key={product.detailId}
+                      key={product.productId}
                       role="button"
                       tabIndex={0}
-                      onClick={() => navigate(`/products/${product.productId}?detailId=${product.detailId}`)}
+                      onClick={() => navigate(`/products/${product.productId}`)}
                       onKeyDown={(event) => {
                         if (event.key === 'Enter' || event.key === ' ') {
                           event.preventDefault()
-                          navigate(`/products/${product.productId}?detailId=${product.detailId}`)
+                          navigate(`/products/${product.productId}`)
                         }
                       }}
                     >
@@ -323,15 +313,15 @@ export default function HomePage() {
                       </div>
                       <div className="hp-product-body">
                         <h3>{product.name}</h3>
-                        <div className="hp-product-tags">
-                          <span>{product.colorName}</span>
-                          <span>Size {product.sizeName}</span>
-                        </div>
-                        <p>{product.description || `Thiết kế ${product.name} trẻ trung, dễ phối đồ.`}</p>
+                        {product.brand && (
+                          <div className="hp-product-tags">
+                            <span>{product.brand}</span>
+                          </div>
+                        )}
+                        <p>{`Thiết kế ${product.name} trẻ trung, dễ phối đồ.`}</p>
                         <div className="hp-product-card-footer">
                           <div className="hp-product-price-wrap">
-                            <strong>{formatPrice(product.salePrice ?? 0)}</strong>
-                            <small>{product.quantity > 0 ? `Còn ${product.quantity} sản phẩm` : 'Tạm hết hàng'}</small>
+                            <strong>{product.salePrice > 0 ? formatPrice(product.salePrice) : 'Liên hệ'}</strong>
                           </div>
                           <button type="button" className="hp-product-cart-btn">Xem chi tiết</button>
                         </div>
