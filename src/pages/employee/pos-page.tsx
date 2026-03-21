@@ -10,14 +10,19 @@ import {
   Pagination,
   Row,
   Select,
+  Space,
   Spin,
+  List,
+  Modal,
   Tag,
   Tooltip,
   Typography,
 } from 'antd'
 import { checkVoucher, placeOrder } from '@/services/order.service'
-import type { OrderRequest, VoucherCheckResponse } from '@/types'
+import { getVouchersByPrice } from '@/services/voucher.service'
+import type { OrderRequest, VoucherCheckResponse, VoucherResponse } from '@/types'
 import {
+  CheckOutlined,
   CloseOutlined,
   DeleteOutlined,
   MinusOutlined,
@@ -45,6 +50,7 @@ interface LineItem {
   salePrice: number
   quantity: number
   image?: string
+  maxQuantity?: number
 }
 
 interface OrderTab {
@@ -277,16 +283,31 @@ function OrderPanel({
   const { message } = App.useApp()
   const activeTab = tabs.find(t => t.id === activeTabId) ?? null
   const [applyingVoucher, setApplyingVoucher] = useState(false)
+  const [isVoucherModalOpen, setIsVoucherModalOpen] = useState(false)
 
   const subtotal = activeTab ? activeTab.items.reduce((s, i) => s + i.salePrice * i.quantity, 0) : 0
   const discount = activeTab?.voucherResult?.discountAmount ?? 0
   const total = Math.max(0, subtotal - discount)
 
+  const { data: vouchersData, isLoading: isVouchersLoading } = useQuery({
+    queryKey: ['vouchers', subtotal],
+    queryFn: () => getVouchersByPrice(subtotal).then(r => r.data),
+    enabled: isVoucherModalOpen,
+  })
+  const vouchers = vouchersData?.data ?? []
+
   const updateQty = (tab: OrderTab, productDetailId: string, qty: number) => {
     if (qty <= 0) {
       onUpdateTab({ ...tab, items: tab.items.filter(i => i.productDetailId !== productDetailId) })
     } else {
-      onUpdateTab({ ...tab, items: tab.items.map(i => i.productDetailId === productDetailId ? { ...i, quantity: qty } : i) })
+      const item = tab.items.find(i => i.productDetailId === productDetailId)
+      const max = item?.maxQuantity ?? 9999
+      if (qty > max) {
+        message.warning(`Số lượng tồn chỉ còn ${max}`)
+        onUpdateTab({ ...tab, items: tab.items.map(i => i.productDetailId === productDetailId ? { ...i, quantity: max } : i) })
+      } else {
+        onUpdateTab({ ...tab, items: tab.items.map(i => i.productDetailId === productDetailId ? { ...i, quantity: qty } : i) })
+      }
     }
   }
 
@@ -413,6 +434,7 @@ function OrderPanel({
                       <InputNumber
                         size="small"
                         min={1}
+                        max={item.maxQuantity}
                         value={item.quantity}
                         onChange={v => updateQty(activeTab, item.productDetailId, v ?? 1)}
                         style={{ width: 46 }}
@@ -492,26 +514,47 @@ function OrderPanel({
               {/* Voucher */}
               <Col span={24}>
                 <div style={{ fontSize: 11, color: '#888', marginBottom: 3 }}>Mã giảm giá</div>
-                <Input.Search
+                <Input
                   size="small"
                   prefix={<TagOutlined style={{ color: '#bbb' }} />}
-                  placeholder="Nhập mã giảm giá..."
+                  placeholder="Chọn mã giảm giá..."
                   value={activeTab.voucherCode}
-                  enterButton="Áp dụng"
-                  loading={applyingVoucher}
-                  disabled={activeTab.isReadonly}
-                  onChange={e => onUpdateTab({ ...activeTab, voucherCode: e.target.value.toUpperCase(), voucherResult: null, discount: 0 })}
-                  onSearch={code => {
-                    if (!code.trim()) {
-                      onUpdateTab({ ...activeTab, voucherResult: null, discount: 0 })
-                      return
-                    }
-                    applyVoucher({ ...activeTab, voucherCode: code.trim() })
+                  readOnly
+                  onClick={() => {
+                    if (!activeTab.isReadonly) setIsVoucherModalOpen(true)
                   }}
+                  disabled={activeTab.isReadonly}
+                  suffix={
+                    <Button
+                      type="primary"
+                      size="small"
+                      onClick={() => {
+                        if (!activeTab.isReadonly) setIsVoucherModalOpen(true)
+                      }}
+                      disabled={activeTab.isReadonly}
+                    >
+                      Chọn
+                    </Button>
+                  }
                 />
                 {activeTab.voucherResult && (
-                  <div style={{ color: '#52c41a', fontSize: 11, marginTop: 3 }}>
-                    ✓ {activeTab.voucherResult.ten} — Giảm {activeTab.voucherResult.discountAmount.toLocaleString('vi-VN')}₫
+                  <div style={{ marginTop: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ color: '#52c41a', fontSize: 11 }}>
+                      ✓ {activeTab.voucherResult.ten} — Giảm {activeTab.voucherResult.discountAmount.toLocaleString('vi-VN')}₫
+                    </div>
+                    {!activeTab.isReadonly && (
+                      <Button
+                        type="link"
+                        danger
+                        size="small"
+                        onClick={() => {
+                          onUpdateTab({ ...activeTab, voucherCode: '', voucherResult: null, discount: 0 })
+                        }}
+                        style={{ padding: 0, fontSize: 11, height: 'auto' }}
+                      >
+                        Xóa
+                      </Button>
+                    )}
                   </div>
                 )}
               </Col>
@@ -568,6 +611,78 @@ function OrderPanel({
             )}
           </div>
         </div>
+      )}
+
+      {/* Voucher Modal */}
+      {activeTab && (
+        <Modal
+          title="Chọn mã giảm giá"
+          open={isVoucherModalOpen}
+          onCancel={() => setIsVoucherModalOpen(false)}
+          footer={null}
+          destroyOnClose
+          styles={{ body: { maxHeight: '60vh', overflowY: 'auto', padding: '12px 0' } }}
+        >
+          <Spin spinning={isVouchersLoading}>
+            <List
+              dataSource={vouchers}
+              locale={{ emptyText: 'Không có mã giảm giá nào' }}
+              renderItem={(item: VoucherResponse) => (
+                <List.Item
+                  style={{
+                    opacity: item.valid === false ? 0.5 : 1,
+                    cursor: item.valid === false ? 'not-allowed' : 'pointer',
+                    backgroundColor: activeTab.voucherCode === item.ma ? '#e6f4ff' : 'transparent',
+                    padding: '12px',
+                    border: '1px solid #f0f0f0',
+                    borderRadius: '8px',
+                    marginBottom: '8px',
+                    margin: '0 12px 8px 12px',
+                  }}
+                  onClick={() => {
+                    if (item.valid !== false) {
+                      setIsVoucherModalOpen(false)
+                      setApplyingVoucher(true)
+                      checkVoucher(item.ma, subtotal)
+                        .then(res => {
+                          const result = res.data.data
+                          onUpdateTab({ ...activeTab, voucherCode: item.ma, voucherResult: result, discount: result.discountAmount })
+                          message.success(`Áp dụng thành công! Giảm ${result.discountAmount.toLocaleString('vi-VN')}₫`)
+                        })
+                        .catch((err: unknown) => {
+                          const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+                          message.error(msg ?? 'Mã giảm giá không hợp lệ')
+                          onUpdateTab({ ...activeTab, voucherCode: '', voucherResult: null, discount: 0 })
+                        })
+                        .finally(() => setApplyingVoucher(false))
+                    }
+                  }}
+                >
+                  <List.Item.Meta
+                    title={
+                      <Space>
+                        <strong>{item.ma}</strong>
+                        <Tag color="green">
+                          {item.loaiGiam === 0 ? `${item.giaTriGiam}%` : `${item.giaTriGiam.toLocaleString('vi-VN')}₫`}
+                        </Tag>
+                      </Space>
+                    }
+                    description={
+                      <Space direction="vertical" size={0}>
+                        <Typography.Text>{item.ten}</Typography.Text>
+                        <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                          Tối thiểu: {item.toiThieu.toLocaleString('vi-VN')}₫
+                          {item.loaiGiam === 0 && item.toiDa > 0 && ` - Tối đa: ${item.toiDa.toLocaleString('vi-VN')}₫`}
+                        </Typography.Text>
+                      </Space>
+                    }
+                  />
+                  {activeTab.voucherCode === item.ma && <CheckOutlined style={{ color: '#1677ff', fontSize: 20 }} />}
+                </List.Item>
+              )}
+            />
+          </Spin>
+        </Modal>
       )}
     </div>
   )
@@ -787,11 +902,18 @@ export default function PosPage() {
       message.warning('Đơn hàng này đã thanh toán, không thể thêm sản phẩm!')
       return
     }
+
+    const ex = currentTab?.items.find(i => i.productDetailId === variant.id)
+    if (ex && ex.quantity >= variant.quantity) {
+      message.warning(`Số lượng tồn chỉ còn ${variant.quantity}`)
+      return
+    }
+
     setTabs(prev => prev.map(tab => {
       if (tab.id !== activeTabId) return tab
-      const ex = tab.items.find(i => i.productDetailId === variant.id)
-      if (ex) {
-        return { ...tab, items: tab.items.map(i => i.productDetailId === variant.id ? { ...i, quantity: i.quantity + 1 } : i) }
+      const existing = tab.items.find(i => i.productDetailId === variant.id)
+      if (existing) {
+        return { ...tab, items: tab.items.map(i => i.productDetailId === variant.id ? { ...i, quantity: i.quantity + 1, maxQuantity: variant.quantity } : i) }
       }
       return {
         ...tab,
@@ -805,6 +927,7 @@ export default function PosPage() {
             salePrice: variant.salePrice,
             quantity: 1,
             image: variant.images?.[0],
+            maxQuantity: variant.quantity,
           },
         ],
       }
