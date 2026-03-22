@@ -543,21 +543,6 @@ function OrderPanel({
                   disabled={activeTab.isReadonly}
                 />
               </Col>
-              {/* Order type */}
-              <Col span={12}>
-                <div style={{ fontSize: 11, color: '#888', marginBottom: 3 }}>Loại đơn</div>
-                <Select
-                  size="small"
-                  style={{ width: '100%' }}
-                  value={activeTab.type}
-                  onChange={v => onUpdateTab({ ...activeTab, type: v })}
-                  disabled={activeTab.isReadonly}
-                  options={[
-                    { value: 0, label: 'Tại quầy' },
-                    { value: 1, label: 'Online' },
-                  ]}
-                />
-              </Col>
               {/* Payment */}
               <Col span={12}>
                 <div style={{ fontSize: 11, color: '#888', marginBottom: 3 }}>Thanh toán</div>
@@ -574,7 +559,7 @@ function OrderPanel({
                 />
               </Col>
               {/* Note */}
-              <Col span={12}>
+              <Col span={24}>
                 <div style={{ fontSize: 11, color: '#888', marginBottom: 3 }}>Ghi chú</div>
                 <Input
                   size="small"
