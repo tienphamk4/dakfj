@@ -98,6 +98,14 @@ export const searchProductDetails = (params: SearchProductDetailParams) =>
 export const getProductDetailsByProductId = (productId: string) =>
   axiosInstance.get<ApiResponse<ProductDetailResponse[]>>(`/api/admin/product-detail/product/${productId}`)
 
+export interface ChangeQuantityProductDetailBody {
+  id: string
+  quantity: number
+}
+
+export const changeProductDetailQuantity = (body: ChangeQuantityProductDetailBody[]) =>
+  axiosInstance.post<ApiResponse<ChangeQuantityProductDetailBody[]>>('/change-quantity-product-detail', body)
+
 // ── Homepage (public) ────────────────────────────────────────────────────────
 export const getHomepageProducts = () =>
   axiosInstance.get<ApiResponse<ProductDetailResponse[]>>('/')

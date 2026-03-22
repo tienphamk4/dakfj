@@ -32,7 +32,7 @@ import {
   TagOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { getProducts, getProductDetailsByProductId } from '@/services/product.service'
+import { getProducts, getProductDetailsByProductId, changeProductDetailQuantity } from '@/services/product.service'
 import { createEmployeeOrder } from '@/services/employee.service'
 import { resolveImageUrl } from '@/utils/image-url'
 import type { EmployeeOrderRequest, PaymentMethod, ProductDetailResponse, ProductResponse, VNPayResponse } from '@/types'
@@ -172,6 +172,65 @@ function ProductMiniCard({
 }
 
 // ─── Variant Drawer ────────────────────────────────────────────────────────
+function VariantRow({ v, onAdd }: { v: ProductDetailResponse; onAdd: (v: ProductDetailResponse, qty: number) => void }) {
+  const [qty, setQty] = useState(1)
+  const img = resolveImageUrl(v.images?.[0])
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: '10px 12px',
+        border: '1px solid #eee',
+        borderRadius: 8,
+        background: '#fafafa',
+      }}
+    >
+      <div style={{ width: 52, height: 52, borderRadius: 6, overflow: 'hidden', background: '#f0f0f0', flexShrink: 0 }}>
+        {img
+          ? <img src={img} alt={v.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ccc' }}>?</div>
+        }
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{v.name}</div>
+        <div style={{ display: 'flex', gap: 4, marginTop: 3, flexWrap: 'wrap' }}>
+          {v.colorName && <Tag color="blue" style={{ fontSize: 11 }}>{v.colorName}</Tag>}
+          {v.sizeName && <Tag color="green" style={{ fontSize: 11 }}>{v.sizeName}</Tag>}
+        </div>
+        <div style={{ color: '#f5222d', fontWeight: 700, fontSize: 13, marginTop: 2 }}>
+          {v.salePrice?.toLocaleString('vi-VN')}₫
+        </div>
+        <div style={{ fontSize: 11, color: '#aaa' }}>Tồn kho: {v.quantity}</div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexDirection: 'column' }}>
+        <InputNumber
+          size="small"
+          min={1}
+          max={v.quantity}
+          value={qty}
+          onChange={(val) => setQty(val ?? 1)}
+          style={{ width: 60 }}
+          disabled={v.quantity === 0}
+        />
+        <Button
+          type="primary"
+          size="small"
+          icon={<PlusOutlined />}
+          disabled={v.quantity === 0}
+          onClick={() => {
+            onAdd(v, qty)
+            setQty(1)
+          }}
+        >
+          Thêm
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 function VariantDrawer({
   product,
   open,
@@ -181,7 +240,7 @@ function VariantDrawer({
   product: ProductResponse | null
   open: boolean
   onClose: () => void
-  onAdd: (v: ProductDetailResponse) => void
+  onAdd: (v: ProductDetailResponse, qty: number) => void
 }) {
   const { data, isLoading } = useQuery({
     queryKey: ['pos-variants', product?.id],
@@ -210,50 +269,9 @@ function VariantDrawer({
         <Typography.Text type="secondary">Không có biến thể nào</Typography.Text>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {variants.map(v => {
-            const img = resolveImageUrl(v.images?.[0])
-            return (
-              <div
-                key={v.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: '10px 12px',
-                  border: '1px solid #eee',
-                  borderRadius: 8,
-                  background: '#fafafa',
-                }}
-              >
-                <div style={{ width: 52, height: 52, borderRadius: 6, overflow: 'hidden', background: '#f0f0f0', flexShrink: 0 }}>
-                  {img
-                    ? <img src={img} alt={v.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ccc' }}>?</div>
-                  }
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{v.name}</div>
-                  <div style={{ display: 'flex', gap: 4, marginTop: 3, flexWrap: 'wrap' }}>
-                    {v.colorName && <Tag color="blue" style={{ fontSize: 11 }}>{v.colorName}</Tag>}
-                    {v.sizeName && <Tag color="green" style={{ fontSize: 11 }}>{v.sizeName}</Tag>}
-                  </div>
-                  <div style={{ color: '#f5222d', fontWeight: 700, fontSize: 13, marginTop: 2 }}>
-                    {v.salePrice?.toLocaleString('vi-VN')}₫
-                  </div>
-                  <div style={{ fontSize: 11, color: '#aaa' }}>Tồn kho: {v.quantity}</div>
-                </div>
-                <Button
-                  type="primary"
-                  size="small"
-                  icon={<PlusOutlined />}
-                  disabled={v.quantity === 0}
-                  onClick={() => onAdd(v)}
-                >
-                  Thêm
-                </Button>
-              </div>
-            )
-          })}
+          {variants.map(v => (
+            <VariantRow key={v.id} v={v} onAdd={onAdd} />
+          ))}
         </div>
       )}
     </Drawer>
@@ -261,6 +279,84 @@ function VariantDrawer({
 }
 
 // ─── Right Panel (order area) ──────────────────────────────────────────────
+function OrderItemRow({
+  item,
+  activeTab,
+  onUpdateQty,
+  onRemoveItem,
+}: {
+  item: LineItem
+  activeTab: OrderTab
+  onUpdateQty: (tab: OrderTab, id: string, qty: number) => void
+  onRemoveItem: (tab: OrderTab, id: string) => void
+}) {
+  const [localQty, setLocalQty] = useState(item.quantity)
+  const isChanged = localQty !== item.quantity
+
+  useEffect(() => {
+    setLocalQty(item.quantity)
+  }, [item.quantity])
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '8px 10px',
+        background: '#fafafa',
+        borderRadius: 8,
+        border: '1px solid #f0f0f0',
+      }}
+    >
+      {item.image && (
+        <img
+          src={resolveImageUrl(item.image)}
+          alt={item.name}
+          style={{ width: 38, height: 38, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }}
+        />
+      )}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <Typography.Text ellipsis={{ tooltip: item.name }} style={{ fontWeight: 600, fontSize: 12, display: 'block' }}>
+          {item.name}
+        </Typography.Text>
+        <div style={{ display: 'flex', gap: 3, marginTop: 2 }}>
+          {item.colorName && <Tag color="blue" style={{ fontSize: 10, padding: '0 4px', lineHeight: '16px' }}>{item.colorName}</Tag>}
+          {item.sizeName && <Tag color="green" style={{ fontSize: 10, padding: '0 4px', lineHeight: '16px' }}>{item.sizeName}</Tag>}
+        </div>
+        <div style={{ color: '#f5222d', fontSize: 12, fontWeight: 700 }}>{item.salePrice?.toLocaleString('vi-VN')}₫</div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <InputNumber
+          size="small"
+          min={1}
+          max={item.maxQuantity}
+          value={localQty}
+          onChange={v => setLocalQty(v ?? 1)}
+          style={{ width: 60 }}
+          disabled={activeTab.isReadonly}
+        />
+        {isChanged && !activeTab.isReadonly && (
+          <Button
+            type="primary"
+            size="small"
+            style={{ fontSize: 11, padding: '0 8px' }}
+            onClick={() => onUpdateQty(activeTab, item.productDetailId, localQty)}
+          >
+            Cập nhật
+          </Button>
+        )}
+      </div>
+      <div style={{ fontSize: 12, fontWeight: 700, minWidth: 70, textAlign: 'right', color: '#333' }}>
+        {(item.salePrice * item.quantity).toLocaleString('vi-VN')}₫
+      </div>
+      <Tooltip title="Xóa">
+        <Button size="small" disabled={activeTab.isReadonly} danger icon={<DeleteOutlined />} onClick={() => onRemoveItem(activeTab, item.productDetailId)} />
+      </Tooltip>
+    </div>
+  )
+}
+
 function OrderPanel({
   tabs,
   activeTabId,
@@ -296,23 +392,43 @@ function OrderPanel({
   })
   const vouchers = vouchersData?.data ?? []
 
-  const updateQty = (tab: OrderTab, productDetailId: string, qty: number) => {
+  const updateQty = async (tab: OrderTab, productDetailId: string, qty: number) => {
+    const item = tab.items.find(i => i.productDetailId === productDetailId)
+    if (!item) return
     if (qty <= 0) {
-      onUpdateTab({ ...tab, items: tab.items.filter(i => i.productDetailId !== productDetailId) })
-    } else {
-      const item = tab.items.find(i => i.productDetailId === productDetailId)
-      const max = item?.maxQuantity ?? 9999
-      if (qty > max) {
-        message.warning(`Số lượng tồn chỉ còn ${max}`)
-        onUpdateTab({ ...tab, items: tab.items.map(i => i.productDetailId === productDetailId ? { ...i, quantity: max } : i) })
-      } else {
-        onUpdateTab({ ...tab, items: tab.items.map(i => i.productDetailId === productDetailId ? { ...i, quantity: qty } : i) })
-      }
+      await removeItem(tab, productDetailId)
+      return
+    }
+
+    let actualQty = qty
+    const max = item.maxQuantity ?? 9999
+    if (actualQty > max) {
+      message.warning(`Số lượng tồn chỉ còn ${max}`)
+      actualQty = max
+    }
+
+    const offset = item.quantity - actualQty // old - new
+    if (offset === 0) return
+
+    try {
+      await changeProductDetailQuantity([{ id: productDetailId, quantity: offset }])
+      onUpdateTab({ ...tab, items: tab.items.map(i => i.productDetailId === productDetailId ? { ...i, quantity: actualQty } : i) })
+      message.success('Cập nhật số lượng thành công')
+    } catch (err) {
+      message.error('Lỗi khi cập nhật số lượng sản phẩm.')
     }
   }
 
-  const removeItem = (tab: OrderTab, productDetailId: string) => {
-    onUpdateTab({ ...tab, items: tab.items.filter(i => i.productDetailId !== productDetailId) })
+  const removeItem = async (tab: OrderTab, productDetailId: string) => {
+    const item = tab.items.find(i => i.productDetailId === productDetailId)
+    if (!item) return
+    try {
+      await changeProductDetailQuantity([{ id: productDetailId, quantity: item.quantity }])
+      onUpdateTab({ ...tab, items: tab.items.filter(i => i.productDetailId !== productDetailId) })
+      message.success('Đã xóa sản phẩm khỏi đơn')
+    } catch (err) {
+      message.error('Lỗi khi hoàn số lượng sản phẩm.')
+    }
   }
 
   const applyVoucher = (tab: OrderTab) => {
@@ -400,56 +516,13 @@ function OrderPanel({
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {activeTab.items.map(item => (
-                  <div
+                  <OrderItemRow
                     key={item.productDetailId}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      padding: '8px 10px',
-                      background: '#fafafa',
-                      borderRadius: 8,
-                      border: '1px solid #f0f0f0',
-                    }}
-                  >
-                    {item.image && (
-                      <img
-                        src={resolveImageUrl(item.image)}
-                        alt={item.name}
-                        style={{ width: 38, height: 38, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }}
-                      />
-                    )}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <Typography.Text ellipsis={{ tooltip: item.name }} style={{ fontWeight: 600, fontSize: 12, display: 'block' }}>
-                        {item.name}
-                      </Typography.Text>
-                      <div style={{ display: 'flex', gap: 3, marginTop: 2 }}>
-                        {item.colorName && <Tag color="blue" style={{ fontSize: 10, padding: '0 4px', lineHeight: '16px' }}>{item.colorName}</Tag>}
-                        {item.sizeName && <Tag color="green" style={{ fontSize: 10, padding: '0 4px', lineHeight: '16px' }}>{item.sizeName}</Tag>}
-                      </div>
-                      <div style={{ color: '#f5222d', fontSize: 12, fontWeight: 700 }}>{item.salePrice?.toLocaleString('vi-VN')}₫</div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                      <Button size="small" disabled={activeTab.isReadonly} icon={<MinusOutlined />} onClick={() => updateQty(activeTab, item.productDetailId, item.quantity - 1)} />
-                      <InputNumber
-                        size="small"
-                        min={1}
-                        max={item.maxQuantity}
-                        value={item.quantity}
-                        onChange={v => updateQty(activeTab, item.productDetailId, v ?? 1)}
-                        style={{ width: 46 }}
-                        controls={false}
-                        disabled={activeTab.isReadonly}
-                      />
-                      <Button size="small" disabled={activeTab.isReadonly} icon={<PlusOutlined />} onClick={() => updateQty(activeTab, item.productDetailId, item.quantity + 1)} />
-                    </div>
-                    <div style={{ fontSize: 12, fontWeight: 700, minWidth: 65, textAlign: 'right', color: '#333' }}>
-                      {(item.salePrice * item.quantity).toLocaleString('vi-VN')}₫
-                    </div>
-                    <Tooltip title="Xóa">
-                      <Button size="small" disabled={activeTab.isReadonly} danger icon={<DeleteOutlined />} onClick={() => removeItem(activeTab, item.productDetailId)} />
-                    </Tooltip>
-                  </div>
+                    item={item}
+                    activeTab={activeTab}
+                    onUpdateQty={updateQty}
+                    onRemoveItem={removeItem}
+                  />
                 ))}
               </div>
             )}
@@ -867,7 +940,17 @@ export default function PosPage() {
   const closeTab = (tabId: string) => {
     const tab = tabs.find(t => t.id === tabId)
     if (!tab) return
-    const doClose = () => {
+    const doClose = async () => {
+      if (tab.items.length > 0 && !tab.isReadonly) {
+        try {
+          const payload = tab.items.map(i => ({ id: i.productDetailId, quantity: i.quantity }))
+          await changeProductDetailQuantity(payload)
+          message.success('Đã hoàn trả số lượng sản phẩm về kho.')
+        } catch (err) {
+          console.error(err)
+          message.error('Lỗi khi hoàn trả số lượng sản phẩm.')
+        }
+      }
       setTabs(prev => {
         const next = prev.filter(t => t.id !== tabId)
         if (activeTabId === tabId) setActiveTabId(next[next.length - 1]?.id ?? null)
@@ -877,7 +960,7 @@ export default function PosPage() {
     if (tab.items.length > 0 && !tab.isReadonly) {
       modal.confirm({
         title: 'Xác nhận đóng đơn',
-        content: `"${tab.label}" có ${tab.items.length} sản phẩm chưa tạo. Bạn có chắc muốn đóng?`,
+        content: `"${tab.label}" có ${tab.items.length} sản phẩm chưa tạo. Bạn có chắc muốn đóng và hoàn trả số lượng về kho?`,
         okText: 'Đóng đơn',
         cancelText: 'Hủy',
         okButtonProps: { danger: true },
@@ -892,7 +975,7 @@ export default function PosPage() {
     setTabs(prev => prev.map(t => t.id === updated.id ? updated : t))
   }
 
-  const handleAddVariant = (variant: ProductDetailResponse) => {
+  const handleAddVariant = async (variant: ProductDetailResponse, qtyToAdd: number) => {
     if (!activeTabId) {
       message.warning('Vui lòng chọn hoặc tạo đơn trước!')
       return
@@ -904,8 +987,15 @@ export default function PosPage() {
     }
 
     const ex = currentTab?.items.find(i => i.productDetailId === variant.id)
-    if (ex && ex.quantity >= variant.quantity) {
+    if (ex && ex.quantity + qtyToAdd > variant.quantity) {
       message.warning(`Số lượng tồn chỉ còn ${variant.quantity}`)
+      return
+    }
+
+    try {
+      await changeProductDetailQuantity([{ id: variant.id, quantity: -qtyToAdd }])
+    } catch (err) {
+      message.error('Lỗi khi trừ số lượng sản phẩm.')
       return
     }
 
@@ -913,7 +1003,7 @@ export default function PosPage() {
       if (tab.id !== activeTabId) return tab
       const existing = tab.items.find(i => i.productDetailId === variant.id)
       if (existing) {
-        return { ...tab, items: tab.items.map(i => i.productDetailId === variant.id ? { ...i, quantity: i.quantity + 1, maxQuantity: variant.quantity } : i) }
+        return { ...tab, items: tab.items.map(i => i.productDetailId === variant.id ? { ...i, quantity: i.quantity + qtyToAdd, maxQuantity: variant.quantity } : i) }
       }
       return {
         ...tab,
@@ -925,14 +1015,14 @@ export default function PosPage() {
             colorName: variant.colorName,
             sizeName: variant.sizeName,
             salePrice: variant.salePrice,
-            quantity: 1,
+            quantity: qtyToAdd,
             image: variant.images?.[0],
             maxQuantity: variant.quantity,
           },
         ],
       }
     }))
-    message.success(`Đã thêm "${variant.name}"`, 1.2)
+    message.success(`Đã thêm ${qtyToAdd} "${variant.name}"`, 1.2)
   }
 
   const handleOpenProduct = (product: ProductResponse) => {
@@ -1113,8 +1203,8 @@ export default function PosPage() {
         product={selectedProduct}
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        onAdd={v => {
-          handleAddVariant(v)
+        onAdd={(v, qty) => {
+          handleAddVariant(v, qty)
           setDrawerOpen(false)
         }}
       />

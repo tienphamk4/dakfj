@@ -83,7 +83,11 @@ export default function UserOrderDetailPage() {
       width: 60,
       render: (_: unknown, __: ProductDetailResponse, index: number) => index + 1,
     },
-    { title: 'Tên sản phẩm', dataIndex: 'name', key: 'name' },
+    {
+      title: 'Tên sản phẩm',
+      key: 'name',
+      render: (_: unknown, record: ProductDetailResponse) => record.productName || record.name,
+    },
     { title: 'Màu', dataIndex: 'colorName', key: 'colorName' },
     { title: 'Size', dataIndex: 'sizeName', key: 'sizeName' },
     {
