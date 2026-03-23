@@ -1007,7 +1007,7 @@ export default function PosPage() {
         ],
       }
     }))
-    message.success(`Đã thêm ${qtyToAdd} "${variant.name}"`, 1.2)
+    // message.success(`Đã thêm ${qtyToAdd}`, 1.2)
   }
 
   const handleOpenProduct = (product: ProductResponse) => {
