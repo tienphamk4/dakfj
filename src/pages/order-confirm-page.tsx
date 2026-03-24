@@ -19,6 +19,7 @@ import {
 } from 'antd'
 import { CheckOutlined } from '@ant-design/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { getUserProfile } from '@/services/user-profile.service'
 import { getCart } from '@/services/cart.service'
 import { checkVoucher, placeOrder } from '@/services/order.service'
 import { getVouchersByPrice } from '@/services/voucher.service'
@@ -37,6 +38,7 @@ export default function OrderConfirmPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const { message } = App.useApp()
+  const [form] = Form.useForm<OrderForm>()
 
   const selectedIds: string[] = location.state?.selectedIds ?? []
 
@@ -47,6 +49,18 @@ export default function OrderConfirmPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['cart'],
     queryFn: () => getCart().then(r => r.data),
+  })
+
+  // Load user profile to prefill address if available
+  const { data: profileData } = useQuery({
+    queryKey: ['user-profile'],
+    queryFn: () => getUserProfile().then(r => r.data),
+    retry: false,
+    onSuccess: res => {
+      if (res?.data?.address) {
+        form.setFieldsValue({ address: res.data.address })
+      }
+    },
   })
 
   const allItems: CartItem[] = data?.data ?? []
@@ -191,6 +205,7 @@ export default function OrderConfirmPage() {
       {/* Order form */}
       <Card className="oc-card oc-form-card">
         <Form<OrderForm>
+          form={form}
           className="oc-form"
           layout="vertical"
           initialValues={{ paymentMethod: 'COD' }}

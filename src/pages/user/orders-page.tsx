@@ -29,7 +29,12 @@ export default function UserOrdersPage() {
 
   const queryClient = useQueryClient()
 
-  const handleCancelOrder = async (id: string) => {
+  const handleCancelOrder = async (id: string, status: number) => {
+    if (status === 6) {
+      message.error('Đơn đã giao không thể hủy')
+      return
+    }
+
     try {
       await cancelUserOrder(id)
       message.success('Hủy đơn thành công')
@@ -75,7 +80,7 @@ export default function UserOrdersPage() {
       key: 'action',
       width: 200,
       render: (_: unknown, record: OrderResponse) => {
-        const canCancel = [0, 1, 6].includes(record.status)
+        const canCancel = [0, 1].includes(record.status)
         return (
           <div style={{ display: 'flex', gap: 8 }}>
             <Button icon={<EyeOutlined />} onClick={() => navigate(`/orders/${record.id}`)}>
@@ -87,7 +92,7 @@ export default function UserOrdersPage() {
                 title="Bạn có chắc muốn hủy đơn này?"
                 okText="Hủy"
                 cancelText="Không"
-                onConfirm={() => handleCancelOrder(record.id)}
+                onConfirm={() => handleCancelOrder(record.id, record.status)}
               >
                 <Button danger>Hủy</Button>
               </Popconfirm>
