@@ -177,7 +177,7 @@ export default function UserOrderDetailPage() {
               <Descriptions.Item label="Người nhận">{order.customerResponse?.name || '—'}</Descriptions.Item>
               <Descriptions.Item label="Email">{order.customerResponse?.email || '—'}</Descriptions.Item>
               <Descriptions.Item label="Số điện thoại">{order.customerResponse?.phone || '—'}</Descriptions.Item>
-              <Descriptions.Item label="Địa chỉ" span={2}>{order.customerResponse?.address || '—'}</Descriptions.Item>
+              <Descriptions.Item label="Địa chỉ" span={2}>{order.address || order.customerResponse?.address || '—'}</Descriptions.Item>
               {order.userResponse && (
                 <>
                   <Descriptions.Item label="Người xác nhận">{order.userResponse?.name || '—'}</Descriptions.Item>

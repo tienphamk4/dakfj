@@ -56,6 +56,7 @@ export interface OrderResponse {
   status: number
   userResponse: UserResponse | null
   customerResponse?: UserResponse | null
+  address?: string
   productDetailResponses: ProductDetailResponse[]
 }
 

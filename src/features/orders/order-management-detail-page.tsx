@@ -176,7 +176,7 @@ export default function OrderManagementDetailPage({ rolePath }: OrderManagementD
               <Descriptions.Item label="Người mua">{order.customerResponse?.name || 'Khách lẻ'}</Descriptions.Item>
               <Descriptions.Item label="Email người mua">{order.customerResponse?.email || '—'}</Descriptions.Item>
               <Descriptions.Item label="SĐT người mua">{order.customerResponse?.phone || '—'}</Descriptions.Item>
-              <Descriptions.Item label="Địa chỉ giao hàng" span={2}>{order.customerResponse?.address || '—'}</Descriptions.Item>
+              <Descriptions.Item label="Địa chỉ giao hàng" span={2}>{order.address || order.customerResponse?.address || '—'}</Descriptions.Item>
               <Descriptions.Item label="Người xác nhận">{order.userResponse?.name || '—'}</Descriptions.Item>
               <Descriptions.Item label="SĐT người xác nhận">{order.userResponse?.phone || '—'}</Descriptions.Item>
               <Descriptions.Item label="Ghi chú" span={2}>{order.note || '—'}</Descriptions.Item>
