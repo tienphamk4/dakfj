@@ -13,10 +13,9 @@ const STATUS_LABELS: Record<number, { label: string; color: string }> = {
   0: { label: 'Chờ xác nhận', color: 'gold' },
   1: { label: 'Đã xác nhận', color: 'blue' },
   2: { label: 'Đang giao hàng', color: 'cyan' },
-  6: { label: 'Đã giao', color: 'geekblue' },
+  5: { label: 'Hoàn thành', color: 'green' },
   3: { label: 'Đã hủy', color: 'red' },
   4: { label: 'Đơn bị hoàn', color: 'volcano' },
-  5: { label: 'Hoàn thành', color: 'green' },
 }
 
 const PAYMENT_STATUS_LABELS: Record<number, { label: string; color: string }> = {
@@ -34,8 +33,7 @@ const TERMINAL_STATUSES = [3, 4, 5]
 const STATUS_TRANSITIONS: Record<number, number[]> = {
   0: [1, 3],
   1: [2, 3],
-  2: [6, 3],
-  6: [5, 3],
+  2: [5, 3],
 }
 
 interface OrderManagementDetailPageProps {

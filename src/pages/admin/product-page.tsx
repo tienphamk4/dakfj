@@ -53,6 +53,7 @@ interface FilterValues {
   name?: string
   brandId?: string
   marterialId?: string
+  status?: 0 | 1
 }
 
 /** Local state for a product detail – may or may not have an `id` yet. */
@@ -988,6 +989,11 @@ export default function ProductPage() {
       const materialName = materialsRes?.data?.find(m => m.id === filterValues.marterialId)?.name
       if (materialName && p.marterial !== materialName) return false
     }
+    if (filterValues.status !== undefined) {
+      const wantActive = filterValues.status === 1
+      if ((wantActive && p.status !== 'hoat dong') || (!wantActive && p.status !== 'khong hoat dong')) return false
+    }
+    
     return true
   })
 
@@ -1068,6 +1074,18 @@ export default function ProductPage() {
               <Select
                 options={materialsRes?.data?.map(m => ({ value: m.id, label: m.name }))}
                 placeholder="Chọn chất liệu"
+                allowClear
+              />
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Form.Item name="status" label="Trạng thái" style={{ marginBottom: 0 }}>
+              <Select
+                options={[
+                  { value: 1, label: 'Hoạt động' },
+                  { value: 0, label: 'Không hoạt động' },
+                ]}
+                placeholder="Chọn trạng thái"
                 allowClear
               />
             </Form.Item>

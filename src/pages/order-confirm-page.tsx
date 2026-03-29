@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   App,
@@ -19,7 +19,7 @@ import {
 } from 'antd'
 import { CheckOutlined } from '@ant-design/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { getUserProfile } from '@/services/user-profile.service'
+import { useAuthStore } from '@/store/use-auth-store'
 import { getCart } from '@/services/cart.service'
 import { checkVoucher, placeOrder } from '@/services/order.service'
 import { getVouchersByPrice } from '@/services/voucher.service'
@@ -40,6 +40,14 @@ export default function OrderConfirmPage() {
   const { message } = App.useApp()
   const [form] = Form.useForm<OrderForm>()
 
+  const user = useAuthStore(state => state.user)
+
+  useEffect(() => {
+    if (user?.address) {
+      form.setFieldsValue({ address: user.address })
+    }
+  }, [user, form])
+
   const selectedIds: string[] = location.state?.selectedIds ?? []
 
   const [voucherCode, setVoucherCode] = useState('')
@@ -50,19 +58,6 @@ export default function OrderConfirmPage() {
     queryKey: ['cart'],
     queryFn: () => getCart().then(r => r.data),
   })
-
-  // Load user profile to prefill address if available
-  const { data: profileData } = useQuery({
-    queryKey: ['user-profile'],
-    queryFn: () => getUserProfile().then(r => r.data),
-    retry: false,
-    onSuccess: res => {
-      if (res?.data?.address) {
-        form.setFieldsValue({ address: res.data.address })
-      }
-    },
-  })
-
   const allItems: CartItem[] = data?.data ?? []
   const selectedItems = allItems.filter(i => selectedIds.includes(i.id))
 
@@ -244,9 +239,9 @@ export default function OrderConfirmPage() {
                 <Typography.Text type="success" className="oc-voucher-success">
                   {voucherResult.ten} — Giảm {voucherResult.discountAmount.toLocaleString('vi-VN')}₫
                 </Typography.Text>
-                <Button 
-                  type="link" 
-                  danger 
+                <Button
+                  type="link"
+                  danger
                   onClick={() => {
                     setVoucherCode('')
                     setVoucherResult(null)

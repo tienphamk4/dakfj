@@ -21,7 +21,7 @@ export default function FilterBox({ children, onSearch, onReset, defaultOpen = f
           onClick={() => setOpen(v => !v)}
           type={open ? 'primary' : 'default'}
         >
-          Tìm kiếm
+          Tìm kiếm và lọc
         </Button>
       </div>
 

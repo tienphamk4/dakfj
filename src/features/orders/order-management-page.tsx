@@ -17,7 +17,7 @@ const STATUS_LABELS: Record<number, { label: string; color: string }> = {
   5: { label: 'Hoàn thành', color: 'green' },
 }
 
-const STATUS_ORDER = [0, 1, 2, 6, 5, 3]
+const STATUS_ORDER = [0, 1, 2, 5, 3]
 const ALL_STATUS = 'all'
 type StatusFilterValue = number | typeof ALL_STATUS
 
@@ -194,15 +194,15 @@ export default function OrderManagementPage({ rolePath }: OrderManagementPagePro
           style={
             activeStatus === ALL_STATUS
               ? {
-                  background: '#595959',
-                  borderColor: '#595959',
-                  color: '#fff',
-                }
+                background: '#595959',
+                borderColor: '#595959',
+                color: '#fff',
+              }
               : {
-                  background: '#fafafa',
-                  borderColor: '#d9d9d9',
-                  color: '#262626',
-                }
+                background: '#fafafa',
+                borderColor: '#d9d9d9',
+                color: '#262626',
+              }
           }
           onClick={() => handleStatusChange(ALL_STATUS)}
         >
@@ -219,15 +219,15 @@ export default function OrderManagementPage({ rolePath }: OrderManagementPagePro
               style={
                 active
                   ? {
-                      background: style.activeBg,
-                      borderColor: style.activeBg,
-                      color: '#fff',
-                    }
+                    background: style.activeBg,
+                    borderColor: style.activeBg,
+                    color: '#fff',
+                  }
                   : {
-                      background: style.bg,
-                      borderColor: style.border,
-                      color: style.text,
-                    }
+                    background: style.bg,
+                    borderColor: style.border,
+                    color: style.text,
+                  }
               }
               onClick={() => handleStatusChange(status)}
             >
