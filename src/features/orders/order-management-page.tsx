@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, Col, DatePicker, Form, Select, Space, Table, Tag, Typography } from 'antd'
+import { Button, Col, DatePicker, Form, Input, Select, Space, Table, Tag, Typography } from 'antd'
 import { EyeOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import dayjs from 'dayjs'
@@ -74,6 +74,7 @@ export default function OrderManagementPage({ rolePath }: OrderManagementPagePro
     const nextFilters: OrderFilterParams = {
       status: activeStatus === ALL_STATUS ? undefined : activeStatus,
       paymentStatus: values.paymentStatus,
+      name: values.name,
       type: values.type,
       paymentMethod: values.paymentMethod,
       fromDate: values.dateRange?.[0]?.startOf('day').valueOf(),
@@ -143,6 +144,11 @@ export default function OrderManagementPage({ rolePath }: OrderManagementPagePro
 
       <Form form={filterForm} layout="vertical">
         <FilterBox onSearch={applyFilters} onReset={resetFilters}>
+          <Col span={6}>
+            <Form.Item name="name" label="Tên hóa đơn" style={{ marginBottom: 0 }}>
+              <Input allowClear placeholder="Tìm theo tên hóa đơn" />
+            </Form.Item>
+          </Col>
           <Col span={4}>
             <Form.Item name="paymentStatus" label="TT thanh toán" style={{ marginBottom: 0 }}>
               <Select

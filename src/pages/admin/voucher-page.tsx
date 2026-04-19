@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { App, Badge, Button, Col, DatePicker, Form, InputNumber, Modal, Popconfirm, Row, Select, Space, Table, Typography, Input } from 'antd'
 import { EditOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -49,6 +49,23 @@ export default function VoucherPage() {
     queryFn: () => getVouchers().then(r => r.data),
   })
 
+  const processedExpiredRef = useRef<Set<string>>(new Set())
+
+  useEffect(() => {
+    if (!data?.data) return
+    const now = dayjs()
+    const expiredActive = data.data.filter(v => v.trangThai === 1 && dayjs(v.ngayKetThuc).isBefore(now, 'day'))
+    if (expiredActive.length === 0) return
+    expiredActive.forEach(v => {
+      if (processedExpiredRef.current.has(v.id)) return
+      processedExpiredRef.current.add(v.id)
+      updateVoucher(v.id, { trangThai: 0 }).then(() => {
+        message.info(`Voucher ${v.ma} đã hết hạn, tự động vô hiệu hoá`)
+        invalidate()
+      }).catch(() => { })
+    })
+  }, [data])
+
   const invalidate = () => qc.invalidateQueries({ queryKey: ['admin-vouchers'] })
 
   const saveMutation = useMutation({
@@ -76,6 +93,7 @@ export default function VoucherPage() {
 
   const deactivateMutation = useMutation({
     mutationFn: deleteVoucher,
+    //  mutationFn: (id: string) => updateVoucher(id, { trangThai: 0 }),
     onSuccess: () => { message.success('Đã vô hiệu hóa voucher!'); invalidate() },
     onError: (err: unknown) => {
       const msg = extractApiErrorMessage(err)
@@ -148,6 +166,7 @@ export default function VoucherPage() {
             onConfirm={() => deactivateMutation.mutate(record.id)}
             okText="Vô hiệu"
             cancelText="Hủy"
+            okButtonProps={{ type: 'primary' }}
           >
             <Button size="small" danger loading={deactivateMutation.isPending} icon={<StopOutlined />} />
           </Popconfirm>
@@ -304,16 +323,24 @@ export default function VoucherPage() {
                   ({ getFieldValue }) => ({
                     validator: (_, value: dayjs.Dayjs | undefined) => {
                       const ngayKetThuc = getFieldValue('ngayKetThuc') as dayjs.Dayjs | undefined
-                      if (!value || !ngayKetThuc) return Promise.resolve()
-                      if (value.isAfter(ngayKetThuc, 'day')) {
-                        return Promise.reject(new Error('Ngày bắt đầu phải <= ngày kết thúc'))
+                      if (!value) return Promise.resolve()
+                      // Start date must be today or later
+                      if (value.isBefore(dayjs(), 'day')) {
+                        return Promise.reject(new Error('Ngày bắt đầu phải từ hôm nay trở đi'))
+                      }
+                      // If end date set, start must be strictly before end
+                      if (ngayKetThuc && !value.isBefore(ngayKetThuc, 'day')) {
+                        return Promise.reject(new Error('Ngày bắt đầu phải trước ngày kết thúc'))
                       }
                       return Promise.resolve()
                     },
                   }),
                 ]}
               >
-                <DatePicker style={{ width: '100%' }} />
+                <DatePicker
+                  style={{ width: '100%' }}
+                  disabledDate={current => !!current && current.isBefore(dayjs(), 'day')}
+                />
               </Form.Item>
             </Col>
             <Col xs={24} md={12}>
@@ -338,7 +365,16 @@ export default function VoucherPage() {
                   }),
                 ]}
               >
-                <DatePicker style={{ width: '100%' }} />
+                <DatePicker
+                  style={{ width: '100%' }}
+                // disabledDate={current => {
+                //   if (!current) return false
+                //   const start: dayjs.Dayjs | undefined = form.getFieldValue('ngayBatDau')
+                //   const min = start ?? dayjs()
+                //   // disable dates that are same or before the min (so end must be after min)
+                //   return !current.isAfter(min, 'day')
+                // }}
+                />
               </Form.Item>
             </Col>
           </Row>

@@ -125,34 +125,7 @@ export default function UserOrderDetailPage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <Button onClick={() => navigate('/orders')}>← Quay lại</Button>
-        {order && (
-          <Button
-            type="primary"
-            loading={downloading}
-            onClick={() => {
-              setDownloading(true)
-              downloadOrderInvoice(order.id)
-                .then((res) => {
-                  const url = window.URL.createObjectURL(new Blob([res.data as BlobPart], { type: 'application/pdf' }))
-                  const link = document.createElement('a')
-                  link.href = url
-                  link.setAttribute('download', `HoaDon_${order.code}.pdf`)
-                  document.body.appendChild(link)
-                  link.click()
-                  link.parentNode?.removeChild(link)
-                  window.URL.revokeObjectURL(url)
-                })
-                .catch(() => {
-                  message.error('Tải hóa đơn thất bại, vui lòng thử lại sau.')
-                })
-                .finally(() => {
-                  setDownloading(false)
-                })
-            }}
-          >
-            In hóa đơn điện tử
-          </Button>
-        )}
+        {/* Invoice download moved to admin/employee order management detail */}
       </div>
       <Typography.Title level={3}>Chi tiết đơn hàng</Typography.Title>
 

@@ -16,7 +16,10 @@ export const resolveImageUrl = (value?: string | null): string | undefined => {
     try {
       const parsed = new URL(value)
       const apiHost = new URL(API_BASE_URL).host
-      if (parsed.host !== apiHost) return value
+      // Treat same-host or local hosts (localhost/127.0.0.1) or explicit /images paths
+      const isLocalHost = ['localhost', '127.0.0.1'].includes(parsed.hostname)
+      const isImagesPath = parsed.pathname && parsed.pathname.startsWith('/images/')
+      if (parsed.host !== apiHost && !isLocalHost && !isImagesPath) return value
       const fileName = extractFileName(parsed.pathname)
       return fileName ? `${API_BASE_URL}/images/${fileName}` : undefined
     } catch {

@@ -75,6 +75,9 @@ export default function CartPage() {
             <Typography.Text type="secondary" className="cart-product-variant">
               {record.productDetail.colorName} / {record.productDetail.sizeName}
             </Typography.Text>
+            <div>
+              <Typography.Text type="secondary">Mã: {record.productDetail.code ?? '—'}</Typography.Text>
+            </div>
           </div>
         </Space>
       ),

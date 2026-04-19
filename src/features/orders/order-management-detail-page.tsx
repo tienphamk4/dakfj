@@ -5,6 +5,7 @@ import { EyeOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { getEmployeeOrderDetail, updateEmployeeOrderStatus } from '@/services/employee.service'
+import { downloadOrderInvoice } from '@/services/user-orders.service'
 import { getProductDetailById } from '@/services/product.service'
 import type { ProductDetailResponse } from '@/types'
 import { resolveImageUrl } from '@/utils/image-url'
@@ -21,7 +22,7 @@ const STATUS_LABELS: Record<number, { label: string; color: string }> = {
 const PAYMENT_STATUS_LABELS: Record<number, { label: string; color: string }> = {
   0: { label: 'Chưa thanh toán', color: 'default' },
   1: { label: 'Đã thanh toán', color: 'green' },
-  3: { label: 'Hủy thanh toán', color: 'volcano' },
+  2: { label: 'Hủy thanh toán', color: 'volcano' },
 }
 
 const ORDER_TYPE_LABELS: Record<number, string> = {
@@ -115,6 +116,7 @@ export default function OrderManagementDetailPage({ rolePath }: OrderManagementD
       key: 'name',
       render: (_: unknown, record: ProductDetailResponse) => record.productName || record.name,
     },
+    { title: 'Mã', dataIndex: 'code', key: 'code' },
     { title: 'Màu', dataIndex: 'colorName', key: 'colorName' },
     { title: 'Size', dataIndex: 'sizeName', key: 'sizeName' },
     {
@@ -152,6 +154,32 @@ export default function OrderManagementDetailPage({ rolePath }: OrderManagementD
     <div>
       <Button onClick={() => navigate(`/${rolePath}/orders`)} style={{ marginBottom: 16 }}>← Quay lại</Button>
       <Typography.Title level={3}>Chi tiết đơn hàng</Typography.Title>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+        {order && (
+          <Button
+            type="primary"
+            onClick={() => {
+              // download invoice PDF
+              downloadOrderInvoice(order.id)
+                .then((res) => {
+                  const url = window.URL.createObjectURL(new Blob([res.data as BlobPart], { type: 'application/pdf' }))
+                  const link = document.createElement('a')
+                  link.href = url
+                  link.setAttribute('download', `HoaDon_${order.code}.pdf`)
+                  document.body.appendChild(link)
+                  link.click()
+                  link.parentNode?.removeChild(link)
+                  window.URL.revokeObjectURL(url)
+                })
+                .catch(() => {
+                  App.useApp().message.error('Tải hóa đơn thất bại, vui lòng thử lại sau.')
+                })
+            }}
+          >
+            In hóa đơn
+          </Button>
+        )}
+      </div>
 
       <Card loading={isLoading}>
         {order && (
@@ -198,6 +226,7 @@ export default function OrderManagementDetailPage({ rolePath }: OrderManagementD
                   title="Xác nhận cập nhật trạng thái đơn hàng?"
                   okText="Xác nhận"
                   cancelText="Hủy"
+                  okButtonProps={{ type: 'primary' }}
                   onConfirm={() => {
                     if (nextStatus !== undefined && nextStatus !== order.status) {
                       statusMutation.mutate(nextStatus)

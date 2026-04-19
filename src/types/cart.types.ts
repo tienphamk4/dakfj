@@ -5,6 +5,7 @@ export interface CartItem {
   id: string
   productDetail: {
     id: string
+    code: string
     name: string
     salePrice: number
     quantity: number // stock quantity

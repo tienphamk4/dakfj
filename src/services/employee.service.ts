@@ -6,6 +6,8 @@ export interface OrderFilterParams {
   paymentStatus?: number
   type?: number
   paymentMethod?: PaymentMethod
+  /** Tên người mua / tên hóa đơn - tìm kiếm theo chuỗi */
+  name?: string
   fromDate?: number
   toDate?: number
 }

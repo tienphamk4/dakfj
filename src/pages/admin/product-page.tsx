@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   App,
   Button,
@@ -43,6 +43,7 @@ import { resolveImageUrl } from '@/utils/image-url'
 // ─── Types ──────────────────────────────────────────────────────────────────
 interface ProductFormValues {
   name: string
+  code?: string
   status: 0 | 1
   brandId: string
   marterialId: string
@@ -61,6 +62,7 @@ interface TempDetail {
   /** Present only for existing DB records */
   _uid: string
   id?: string
+  code?: string
   name?: string
   description?: string
   quantity: number
@@ -112,6 +114,7 @@ function ProductDetailSection({
   const visibleDetails = details.filter(d => !d.deleteFlag)
 
   const columns = [
+    { title: 'Mã', dataIndex: 'code', key: 'code', width: 120 },
     { title: 'Màu', dataIndex: 'colorName', key: 'colorName', width: 100 },
     { title: 'Size', dataIndex: 'sizeName', key: 'sizeName', width: 80 },
     { title: 'SL', dataIndex: 'quantity', key: 'quantity', align: 'center' as const, width: 60 },
@@ -527,7 +530,21 @@ function BatchAddDetailModal({
               <Form.Item name="costPrice" label="Giá nhập" rules={[{ required: true, message: 'Nhập giá nhập' }]} style={{ flex: 1 }}>
                 <InputNumber min={0} style={{ width: '100%' }} formatter={v => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
               </Form.Item>
-              <Form.Item name="salePrice" label="Giá bán" rules={[{ required: true, message: 'Nhập giá bán' }]} style={{ flex: 1 }}>
+              <Form.Item
+                name="salePrice"
+                label="Giá bán"
+                rules={[
+                  { required: true, message: 'Nhập giá bán' },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      const cost = getFieldValue('costPrice')
+                      if (value == null || cost == null) return Promise.resolve()
+                      return value > cost ? Promise.resolve() : Promise.reject(new Error('Giá bán phải lớn hơn giá nhập'))
+                    },
+                  }),
+                ]}
+                style={{ flex: 1 }}
+              >
                 <InputNumber min={0} style={{ width: '100%' }} formatter={v => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
               </Form.Item>
             </Space>
@@ -706,7 +723,21 @@ function EditDetailModal({
           <Form.Item name="costPrice" label="Giá nhập" rules={[{ required: true }]} style={{ flex: 1 }}>
             <InputNumber min={0} style={{ width: '100%' }} formatter={v => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
           </Form.Item>
-          <Form.Item name="salePrice" label="Giá bán" rules={[{ required: true }]} style={{ flex: 1 }}>
+          <Form.Item
+            name="salePrice"
+            label="Giá bán"
+            rules={[
+              { required: true },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  const cost = getFieldValue('costPrice')
+                  if (value == null || cost == null) return Promise.resolve()
+                  return value > cost ? Promise.resolve() : Promise.reject(new Error('Giá bán phải lớn hơn giá nhập'))
+                },
+              }),
+            ]}
+            style={{ flex: 1 }}
+          >
             <InputNumber min={0} style={{ width: '100%' }} formatter={v => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
           </Form.Item>
         </Space>
@@ -785,6 +816,7 @@ export default function ProductPage() {
     dbDetails.map(d => ({
       _uid: nextUid(),
       id: d.id,
+      code: d.code ?? undefined,
       name: d.name,
       description: d.description,
       quantity: d.quantity,
@@ -857,6 +889,7 @@ export default function ProductPage() {
         const body: UpdateProductBody = {
           id: editing.id,
           name: values.name,
+          code: values.code,
           status: values.status,
           brandId: values.brandId,
           marterialId: values.marterialId,
@@ -881,6 +914,7 @@ export default function ProductPage() {
 
         const body: CreateProductBody = {
           name: values.name,
+          code: values.code,
           status: values.status,
           brandId: values.brandId,
           marterialId: values.marterialId,
@@ -912,16 +946,23 @@ export default function ProductPage() {
   const openEdit = async (id: string) => {
     setLoadingId(id)
     try {
-      const [productRes, detailsRes] = await Promise.all([
-        getProductById(id),
-        getProductDetailsByProductId(id),
-      ])
+      // Fetch product first. Details may not exist (backend may return 404)
+      const productRes = await getProductById(id)
+      let details: ProductDetailResponse[] = []
+      try {
+        const detailsRes = await getProductDetailsByProductId(id)
+        details = detailsRes.data.data ?? []
+      } catch (err) {
+        // If details fetch fails (e.g., 404), treat as empty list and continue
+        details = []
+      }
+
       const record = productRes.data.data
-      const details = detailsRes.data.data ?? []
       if (record) {
         setEditing(record)
         form.setFieldsValue({
           name: record.name,
+          code: record.code,
           status: record.status === 'hoat dong' ? 1 : 0,
           brandId: record.brandId,
           marterialId: record.marterialId,
@@ -940,12 +981,16 @@ export default function ProductPage() {
   const openView = async (id: string) => {
     setLoadingId(id)
     try {
-      const [productRes, detailsRes] = await Promise.all([
-        getProductById(id),
-        getProductDetailsByProductId(id),
-      ])
+      const productRes = await getProductById(id)
+      let details: ProductDetailResponse[] = []
+      try {
+        const detailsRes = await getProductDetailsByProductId(id)
+        details = detailsRes.data.data ?? []
+      } catch (err) {
+        details = []
+      }
+
       const record = productRes.data.data
-      const details = detailsRes.data.data ?? []
       if (record) {
         setViewProduct(record)
         setViewDetails(dbToTempDetails(details))
@@ -958,7 +1003,8 @@ export default function ProductPage() {
 
   // ── Detail CRUD (local state) ────────────────────────────────────────────
   const handleAddDetails = (newDetails: TempDetail[]) => {
-    setTempDetails(prev => [...prev, ...newDetails])
+    // New details should not inherit parent product code; backend provides codes after save.
+    setTempDetails(prev => [...prev, ...newDetails.map(d => ({ ...d }))])
   }
 
   const handleEditDetail = (updated: TempDetail) => {
@@ -993,13 +1039,52 @@ export default function ProductPage() {
       const wantActive = filterValues.status === 1
       if ((wantActive && p.status !== 'hoat dong') || (!wantActive && p.status !== 'khong hoat dong')) return false
     }
-    
+
     return true
   })
+
+  // Map of productId -> total quantity (sum of its productDetail quantities)
+  const [productQuantities, setProductQuantities] = useState<Record<string, number>>({})
+
+  // When products list changes, fetch details for each product to compute total quantity.
+  useEffect(() => {
+    const products = productsRes?.data ?? []
+    if (!products || products.length === 0) {
+      setProductQuantities({})
+      return
+    }
+
+    let mounted = true
+      ; (async () => {
+        try {
+          const promises = products.map(async p => {
+            try {
+              const res = await getProductDetailsByProductId(p.id)
+              const details: ProductDetailResponse[] = res.data.data ?? []
+              const total = details.reduce((s, d) => s + (d.quantity ?? 0), 0)
+              return { id: p.id, total }
+            } catch {
+              return { id: p.id, total: 0 }
+            }
+          })
+
+          const results = await Promise.all(promises)
+          if (!mounted) return
+          const map: Record<string, number> = {}
+          results.forEach(r => { map[r.id] = r.total })
+          setProductQuantities(map)
+        } catch {
+          if (mounted) setProductQuantities({})
+        }
+      })()
+
+    return () => { mounted = false }
+  }, [productsRes?.data])
 
   // ── Columns ──────────────────────────────────────────────────────────────
   const columns = [
     { title: 'Tên', dataIndex: 'name', key: 'name' },
+    { title: 'Mã', dataIndex: 'code', key: 'code', width: 120 },
     {
       title: 'Ảnh',
       dataIndex: 'image',
@@ -1015,6 +1100,14 @@ export default function ProductPage() {
         <Tag color={v === 'hoat dong' ? 'green' : 'red'}>
           {v === 'hoat dong' ? 'Hoạt động' : 'Không hoạt động'}
         </Tag>
+      ),
+    },
+    {
+      title: 'Tổng SL',
+      key: 'totalQuantity',
+      width: 100,
+      render: (_: unknown, record: ProductResponse) => (
+        <span>{productQuantities[record.id] ?? 0}</span>
       ),
     },
     { title: 'Thương hiệu', dataIndex: 'brand', key: 'brand' },
@@ -1120,6 +1213,9 @@ export default function ProductPage() {
           <Form.Item name="name" label="Tên sản phẩm" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
+          <Form.Item name="code" label="Mã sản phẩm">
+            <Input />
+          </Form.Item>
           <Row gutter={16}>
             <Col span={8}>
               <Form.Item name="status" label="Trạng thái" rules={[{ required: true }]}>
@@ -1180,6 +1276,7 @@ export default function ProductPage() {
           <>
             <Descriptions column={2} bordered size="small" style={{ marginBottom: 16 }}>
               <Descriptions.Item label="Tên">{viewProduct.name}</Descriptions.Item>
+              <Descriptions.Item label="Mã">{viewProduct.code ?? '—'}</Descriptions.Item>
               <Descriptions.Item label="Trạng thái">
                 <Tag color={viewProduct.status === 'hoat dong' ? 'green' : 'red'}>
                   {viewProduct.status === 'hoat dong' ? 'Hoạt động' : 'Không hoạt động'}
@@ -1198,7 +1295,7 @@ export default function ProductPage() {
             <ProductDetailSection
               details={viewDetails}
               isEditMode={false}
-              onAdd={() => {}}
+              onAdd={() => { }}
               onView={(detail) => {
                 setViewingDetail(detail)
                 setViewDetailOpen(true)

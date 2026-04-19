@@ -44,7 +44,7 @@ export default function ProductsPage() {
   const normalizedProducts: ProductListItem[] = useMemo(() => {
     return catalogProducts.map((item: ProductCatalogResponse) => {
       const name = item.ten || item.name || 'Sản phẩm'
-      const image = resolveImageUrl(item.anh ?? (item.images ? item.images[0] : null)) ?? fallbackImage
+      const image = resolveImageUrl(item.anh ?? (item.image)) ?? fallbackImage
 
       return {
         id: item.id,

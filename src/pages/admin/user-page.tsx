@@ -48,6 +48,10 @@ export default function UserPage() {
     mutationFn: (values: UserFormValues) => {
       if (editing) {
         const { password, ...rest } = values
+        // Prevent changing role of existing admin accounts from the UI
+        // if (editing.role === 'admin') {
+        //   rest.role = 'admin'
+        // }
         return updateAdminUser(editing.id, rest)
       }
       return createAdminUser({ ...values, password: values.password! })
@@ -126,7 +130,7 @@ export default function UserPage() {
             okText="Xóa"
             cancelText="Hủy"
           >
-            <Button size="small" danger loading={deleteMutation.isPending} icon={<DeleteOutlined />} />
+            <Button size="small" danger loading={deleteMutation.isPending} icon={<DeleteOutlined />} disabled={record.role === 'admin'} />
           </Popconfirm>
         </Space>
       ),
@@ -203,11 +207,14 @@ export default function UserPage() {
             <Input />
           </Form.Item>
           <Form.Item name="role" label="Vai trò" rules={[{ required: true }]}>
-            <Select options={[
-              { value: 'employee', label: 'Nhân viên' },
-              { value: 'admin', label: 'Admin' },
-              { value: 'user', label: 'Người dùng' },
-            ]} />
+            <Select
+              options={[
+                { value: 'employee', label: 'Nhân viên' },
+                { value: 'admin', label: 'Admin' },
+                { value: 'user', label: 'Người dùng' },
+              ]}
+              disabled={!!editing && editing.role === 'admin'}
+            />
           </Form.Item>
         </Form>
       </Modal>

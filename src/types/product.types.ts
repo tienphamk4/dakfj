@@ -1,5 +1,6 @@
 export interface ProductResponse {
   id: string
+  code?: string
   name: string
   brand: string
   brandId: string
@@ -13,6 +14,7 @@ export interface ProductResponse {
 
 export interface ProductDetailResponse {
   id: string
+  code: string
   name: string
   description: string
   costPrice: number
@@ -44,7 +46,7 @@ export interface ProductCatalogResponse {
   gia?: number | null
   salePrice?: number | null
   anh?: string | null
-  images?: string[] | null
+  image?: string | null
   danhMucCon?: string | null
   category?: string | null
   brandId?: string | null

@@ -346,7 +346,7 @@ export default function ProductDetailPage() {
               >
                 ADD TO CART
               </Button>
-              <Button
+              {/* <Button
                 type="primary"
                 danger
                 size="large"
@@ -356,7 +356,7 @@ export default function ProductDetailPage() {
                 onClick={() => submitAddToCart(true)}
               >
                 MUA NGAY
-              </Button>
+              </Button> */}
             </div>
 
             <div className="product-detail-policies">

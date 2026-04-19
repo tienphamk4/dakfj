@@ -96,7 +96,7 @@ export default function HomePage() {
       productId: item.id,
       name: item.ten || item.name || 'Sản phẩm',
       salePrice: item.gia ?? item.salePrice ?? 0,
-      image: resolveImageUrl(item.anh ?? (item.images ? item.images[0] : null)) ?? fallbackImage,
+      image: resolveImageUrl(item.anh ?? (item.image)) ?? fallbackImage,
       brand: item.brand ?? '',
     }))
   }, [products])

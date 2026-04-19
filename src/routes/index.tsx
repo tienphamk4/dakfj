@@ -85,6 +85,7 @@ export const router = createBrowserRouter([
         element: <AdminLayout />,
         children: [
           { path: '/admin', element: wrap(<AdminDashboard />) },
+          { path: '/admin/pos', element: wrap(<EmployeePosPage />) },
           { path: '/admin/thuong-hieu', element: wrap(<BrandPage />) },
           { path: '/admin/mau-sac', element: wrap(<ColorPage />) },
           { path: '/admin/chat-lieu', element: wrap(<MaterialPage />) },

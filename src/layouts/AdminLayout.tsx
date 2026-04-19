@@ -10,6 +10,7 @@ import {
   OrderedListOutlined,
   ScissorOutlined,
   ShopOutlined,
+  ShoppingCartOutlined,
   TagOutlined,
   TeamOutlined,
   UserOutlined,
@@ -23,6 +24,7 @@ const { Header, Sider, Content } = Layout
 const menuItems = [
   { key: '/admin', icon: <DashboardOutlined />, label: <Link to="/admin">Dashboard</Link> },
   { key: '/admin/san-pham', icon: <ShopOutlined />, label: <Link to="/admin/san-pham">Sản phẩm</Link> },
+  { key: '/admin/pos', icon: <ShoppingCartOutlined />, label: <Link to="/admin/pos">Bán tại quầy</Link> },
   { key: '/admin/orders', icon: <OrderedListOutlined />, label: <Link to="/admin/orders">Đơn hàng</Link> },
   {
     key: 'catalog',

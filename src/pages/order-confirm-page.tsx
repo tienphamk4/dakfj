@@ -151,6 +151,9 @@ export default function OrderConfirmPage() {
             <Typography.Text type="secondary" className="oc-product-variant">
               {record.productDetail.colorName} / {record.productDetail.sizeName}
             </Typography.Text>
+            <div>
+              <Typography.Text type="secondary">Mã: {record.productDetail.code ?? '—'}</Typography.Text>
+            </div>
           </div>
         </Space>
       ),

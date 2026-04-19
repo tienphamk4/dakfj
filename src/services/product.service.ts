@@ -34,6 +34,7 @@ export interface ProductDetailUpdateItem extends ProductDetailItem {
 
 export interface CreateProductBody {
   name: string
+  code?: string
   image: string
   status: 0 | 1
   marterialId: string // note: field name typo mirrors backend
