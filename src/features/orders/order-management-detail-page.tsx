@@ -73,7 +73,7 @@ export default function OrderManagementDetailPage({ rolePath }: OrderManagementD
     ? (PAYMENT_STATUS_LABELS[order.paymentStatus] ?? { label: String(order.paymentStatus), color: 'default' })
     : null
   const isTerminal = order ? TERMINAL_STATUSES.includes(order.status) : false
-  const availableStatusOptions = order
+  let availableStatusOptions = order
     ? [
       { value: order.status, label: `${STATUS_LABELS[order.status]?.label ?? order.status} (hiện tại)` },
       ...(STATUS_TRANSITIONS[order.status] ?? []).map(status => ({
@@ -82,6 +82,11 @@ export default function OrderManagementDetailPage({ rolePath }: OrderManagementD
       })),
     ]
     : []
+
+  // Admins should not be allowed to cancel orders that are already 'Đang giao hàng' (status 2)
+  if (order && rolePath === 'admin' && order.status === 2) {
+    availableStatusOptions = availableStatusOptions.filter(opt => opt.value !== 3)
+  }
 
   useEffect(() => {
     if (order) {
