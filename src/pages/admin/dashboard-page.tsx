@@ -101,7 +101,7 @@ export default function DashboardPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <Typography.Title level={3} style={{ margin: 0 }}>Dashboard</Typography.Title>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <Button onClick={() => setDateRange([dayjs(), dayjs()])}>Hôm nay</Button>
+          <Button onClick={() => setDateRange([dayjs().startOf('day'), dayjs().add(1, 'day').startOf('day')])}>Hôm nay</Button>
           <Button onClick={() => setDateRange([dayjs().startOf('week'), dayjs().endOf('week')])}>Tuần này</Button>
           <Button onClick={() => setDateRange([dayjs().startOf('month'), dayjs().endOf('month')])}>Tháng này</Button>
           <DatePicker.RangePicker
@@ -121,7 +121,7 @@ export default function DashboardPage() {
         <Col span={16}>
           <Card title="Doanh thu theo ngày">
             {loadingDashboard ? (
-               <Skeleton active paragraph={{ rows: 6 }} />
+              <Skeleton active paragraph={{ rows: 6 }} />
             ) : (
               <div style={{ width: '100%', height: 300 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -170,7 +170,7 @@ export default function DashboardPage() {
         <Col span={12}>
           <Card title="Sản phẩm tồn kho thấp (Tất cả sản phẩm)">
             {loadingDashboard ? (
-               <Skeleton active paragraph={{ rows: 6 }} />
+              <Skeleton active paragraph={{ rows: 6 }} />
             ) : (
               <div style={{ width: '100%', height: 300 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -197,8 +197,8 @@ export default function DashboardPage() {
         </Col>
         <Col span={12}>
           <Card title="Sản phẩm bán chạy nhất">
-             {loadingDashboard ? (
-               <Skeleton active paragraph={{ rows: 6 }} />
+            {loadingDashboard ? (
+              <Skeleton active paragraph={{ rows: 6 }} />
             ) : (
               <div style={{ width: '100%', height: 300 }}>
                 <ResponsiveContainer width="100%" height="100%">

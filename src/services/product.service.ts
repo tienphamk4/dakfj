@@ -12,6 +12,10 @@ import type {
 export const getProducts = () =>
   axiosInstance.get<ApiResponse<ProductResponse[]>>('/api/admin/san-pham')
 
+// Products for POS: include status endpoint used by employee POS
+export const getProductsForPos = () =>
+  axiosInstance.get<ApiResponse<ProductResponse[]>>('/api/admin/san-pham-status')
+
 export const getProductById = (id: string) =>
   axiosInstance.get<ApiResponse<ProductResponse>>(`/api/admin/san-pham/${id}`)
 

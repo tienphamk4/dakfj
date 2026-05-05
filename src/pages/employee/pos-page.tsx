@@ -18,9 +18,9 @@ import {
   Tooltip,
   Typography,
 } from 'antd'
-import { checkVoucher, placeOrder } from '@/services/order.service'
+import { checkVoucher } from '@/services/order.service'
 import { getVouchersByPrice } from '@/services/voucher.service'
-import type { OrderRequest, VoucherCheckResponse, VoucherResponse } from '@/types'
+import type { VoucherCheckResponse, VoucherResponse } from '@/types'
 import {
   CheckOutlined,
   CloseOutlined,
@@ -32,7 +32,7 @@ import {
   TagOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { getProducts, getProductDetailsByProductId, changeProductDetailQuantity } from '@/services/product.service'
+import { getProductsForPos, getProductDetailsByProductId, changeProductDetailQuantity } from '@/services/product.service'
 import { createEmployeeOrder } from '@/services/employee.service'
 import { resolveImageUrl } from '@/utils/image-url'
 import type { EmployeeOrderRequest, PaymentMethod, ProductDetailResponse, ProductResponse, VNPayResponse } from '@/types'
@@ -803,21 +803,15 @@ export default function PosPage() {
 
   const { data: productsRes, isLoading } = useQuery({
     queryKey: ['products-pos'],
-    queryFn: () => getProducts().then(r => r.data),
+    queryFn: () => getProductsForPos().then(r => r.data),
   })
 
   const createMutation = useMutation({
-    mutationFn: ({
-      employeeBody,
-      paymentBody,
-      usePaymentApi,
-    }: {
+    mutationFn: (payload: {
       employeeBody: EmployeeOrderRequest
-      paymentBody: OrderRequest
-      usePaymentApi: boolean
       tabId: string
       preOpenedPopup?: Window | null
-    }) => (usePaymentApi ? placeOrder(paymentBody) : createEmployeeOrder(employeeBody)),
+    }) => createEmployeeOrder(payload.employeeBody),
     onSuccess: (res, variables) => {
       const { tabId } = variables
       const raw = res.data.data as unknown
@@ -1041,17 +1035,6 @@ export default function PosPage() {
       voucherCode: tab.voucherResult ? tab.voucherCode : null,
     }
 
-    const paymentBody: OrderRequest = {
-      productDetail: tab.items.map(i => ({ id: i.productDetailId, quantity: i.quantity })),
-      note: tab.note,
-      paymentMethod: 'VNPAY',
-      voucherCode: tab.voucherResult ? tab.voucherCode : null,
-      address: tab.type === 0
-        ? 'Mua tại quầy'
-        : 'POS - Thanh toán VNPAY',
-      isCounter: true,
-    }
-
     const usePaymentApi = tab.paymentMethod === 'VNPAY'
     const preOpenedPopup = usePaymentApi
       ? window.open('', '_blank', 'popup,width=960,height=700,left=200,top=100')
@@ -1068,7 +1051,7 @@ export default function PosPage() {
     }
 
     setCreatingTabId(tab.id)
-    createMutation.mutate({ employeeBody, paymentBody, usePaymentApi, tabId: tab.id, preOpenedPopup }, {
+    createMutation.mutate({ employeeBody, tabId: tab.id, preOpenedPopup }, {
       onError: () => setCreatingTabId(null),
     })
   }
